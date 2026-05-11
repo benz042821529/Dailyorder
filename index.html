@@ -57,10 +57,70 @@ let qty = {}, prices = {};
 function init() {
   shops = DB.getShops();
   products = DB.getProducts();
-  // โหลดราคาจาก products เป็น default
   products.forEach(p => { prices[p.id] = p.price || 0; });
   document.getElementById('today-date').textContent = todayStr();
   renderOrder();
+  setupDelegation();
+}
+
+// ใช้ event delegation แทน inline onclick — ไม่ re-render ทั้งหน้าเมื่อกด +/−
+function setupDelegation() {
+  const el = document.getElementById('order-list');
+
+  el.addEventListener('click', e => {
+    const btn = e.target.closest('.qty-btn');
+    if (!btn) return;
+    const id = parseInt(btn.dataset.id);
+    const d  = parseInt(btn.dataset.d);
+    qty[id] = Math.max(0, (qty[id] || 0) + d);
+    // อัปเดตเฉพาะ input และ subtotal — ไม่ re-render ทั้งหน้า
+    updateRow(id);
+    updateShopSubtotal(id);
+    updateTotal();
+  });
+
+  el.addEventListener('change', e => {
+    if (e.target.classList.contains('qty-input')) {
+      const id = parseInt(e.target.dataset.id);
+      qty[id] = Math.max(0, parseFloat(e.target.value) || 0);
+      updateRow(id);
+      updateShopSubtotal(id);
+      updateTotal();
+    }
+    if (e.target.classList.contains('price-input')) {
+      const id = parseInt(e.target.dataset.id);
+      prices[id] = Math.max(0, parseFloat(e.target.value) || 0);
+      updateRow(id);
+      updateShopSubtotal(id);
+      updateTotal();
+    }
+  });
+}
+
+function updateRow(id) {
+  const q   = qty[id] || 0;
+  const pr  = prices[id] || 0;
+  const sub = q * pr;
+  // sync input value (กรณีกด +/−)
+  const qInput = document.querySelector(`.qty-input[data-id="${id}"]`);
+  if (qInput && document.activeElement !== qInput) qInput.value = q;
+  // อัปเดต subtotal cell
+  const cell = document.querySelector(`.subtotal-cell[data-id="${id}"]`);
+  if (cell) {
+    cell.textContent = sub > 0 ? fmt(sub) : '-';
+    cell.className = 'subtotal subtotal-cell' + (sub === 0 ? ' zero' : '');
+  }
+}
+
+function updateShopSubtotal(changedId) {
+  // หา shop ของ product นี้
+  const p = products.find(x => x.id === changedId);
+  if (!p) return;
+  const sid = p.shopId || 0;
+  const prods = products.filter(x => (x.shopId || 0) === sid);
+  const sub = prods.reduce((s, x) => s + (qty[x.id] || 0) * (prices[x.id] || 0), 0);
+  const el = document.querySelector(`.shop-subtotal[data-shop="${sid}"]`);
+  if (el) el.textContent = sub > 0 ? fmt(sub) : '';
 }
 
 function renderOrder() {
@@ -71,14 +131,14 @@ function renderOrder() {
   }
   const g = groupByShop(products, shops);
 
-  const renderBlock = (shopName, color, prods) => {
+  const renderBlock = (shopName, color, sid, prods) => {
     if (!prods || !prods.length) return '';
     const sub = prods.reduce((s,p) => s + (qty[p.id]||0)*(prices[p.id]||0), 0);
     return `<div class="shop-block">
       <div class="shop-header">
         <div class="shop-dot" style="background:${color}"></div>
         <span class="shop-name-label">${shopName}</span>
-        <span class="shop-subtotal">${sub > 0 ? fmt(sub) : ''}</span>
+        <span class="shop-subtotal" data-shop="${sid}">${sub > 0 ? fmt(sub) : ''}</span>
       </div>
       <div class="shop-body">
         <div class="col-header order-cols">
@@ -94,12 +154,12 @@ function renderOrder() {
           return `<div class="product-row order-cols">
             <div><div class="product-name">${p.name}</div><div class="product-unit">${p.unit}</div></div>
             <div class="qty-control">
-              <button class="qty-btn" onclick="changeQty(${p.id},-1)">−</button>
-              <input class="qty-input" type="number" min="0" inputmode="numeric" value="${q}" onchange="setQty(${p.id},this.value)"/>
-              <button class="qty-btn" onclick="changeQty(${p.id},1)">+</button>
+              <button class="qty-btn" data-id="${p.id}" data-d="-1">−</button>
+              <input class="qty-input" type="number" min="0" inputmode="numeric" value="${q}" data-id="${p.id}"/>
+              <button class="qty-btn" data-id="${p.id}" data-d="1">+</button>
             </div>
-            <input class="price-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="${pr||''}" onchange="setPrice(${p.id},this.value)"/>
-            <div class="subtotal ${sub===0?'zero':''}">${sub>0?fmt(sub):'-'}</div>
+            <input class="price-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="${pr||''}" data-id="${p.id}"/>
+            <div class="subtotal subtotal-cell${sub===0?' zero':''}" data-id="${p.id}">${sub>0?fmt(sub):'-'}</div>
           </div>`;
         }).join('')}
       </div>
@@ -107,23 +167,23 @@ function renderOrder() {
   };
 
   let html = '';
-  shops.forEach(s => { html += renderBlock(s.name, s.color, g[s.id]); });
-  if (g[0] && g[0].length) html += renderBlock('ไม่ระบุร้าน', '#aaa', g[0]);
+  shops.forEach(s => { html += renderBlock(s.name, s.color, s.id, g[s.id]); });
+  if (g[0] && g[0].length) html += renderBlock('ไม่ระบุร้าน', '#aaa', 0, g[0]);
   el.innerHTML = html || '<div class="empty">ยังไม่มีสินค้า</div>';
   updateTotal();
 }
 
-function changeQty(id, d) { qty[id] = Math.max(0,(qty[id]||0)+d); renderOrder(); }
-function setQty(id, v) { qty[id] = Math.max(0, parseFloat(v)||0); updateTotal(); }
-function setPrice(id, v) {
-  prices[id] = Math.max(0, parseFloat(v)||0);
-  updateTotal();
-}
 function updateTotal() {
   const t = products.reduce((s,p) => s + (qty[p.id]||0)*(prices[p.id]||0), 0);
   document.getElementById('grand-total').textContent = fmt(t);
 }
-function clearOrder() { qty = {}; products.forEach(p=>{ prices[p.id]=p.price||0; }); renderOrder(); toast('ล้างรายการเรียบร้อย'); }
+
+function clearOrder() {
+  qty = {};
+  products.forEach(p => { prices[p.id] = p.price || 0; });
+  renderOrder();
+  toast('ล้างรายการเรียบร้อย');
+}
 
 function getItems() {
   return products.filter(p=>(qty[p.id]||0)>0).map(p => ({

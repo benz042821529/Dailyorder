@@ -159,9 +159,9 @@ function renderOrder() {
               </div>
             </div>
             <div class="qty-control">
-              <button class="qty-btn" data-id="${p.id}" data-d="-1">−</button>
+              <button class="qty-btn qty-minus" data-id="${p.id}" data-d="-1">−</button>
               <input class="qty-input" type="number" min="0" inputmode="numeric" value="${q}" data-id="${p.id}"/>
-              <button class="qty-btn" data-id="${p.id}" data-d="1">+</button>
+              <button class="qty-btn qty-plus" data-id="${p.id}" data-d="1">+</button>
             </div>
             <div class="subtotal subtotal-cell${sub===0?' zero':''}" data-id="${p.id}">${sub>0?fmt(sub):'-'}</div>
           </div>`;

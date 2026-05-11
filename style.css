@@ -47,10 +47,10 @@ body { font-family: 'Sarabun', sans-serif; background: #f4f4f0; color: #1a1a1a; 
 .qty-control { display: flex; align-items: center; gap: 3px; }
 /* ปุ่ม − สีแดงอ่อน, ปุ่ม + สีเขียวอ่อน */
 .qty-btn { width: 34px; height: 34px; border: 1.5px solid; border-radius: 8px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Sarabun', sans-serif; flex-shrink: 0; -webkit-tap-highlight-color: transparent; transition: transform 0.1s; }
-.qty-btn[data-d="-1"] { background: #fff2f2; color: #cc3333; border-color: #ffcccc; }
-.qty-btn[data-d="-1"]:active { background: #ffd6d6; transform: scale(0.93); }
-.qty-btn[data-d="1"]  { background: #f0fff4; color: #2b9348; border-color: #b7e4c7; }
-.qty-btn[data-d="1"]:active  { background: #d4f5de; transform: scale(0.93); }
+.qty-btn.qty-minus { background: #fff2f2; color: #cc3333; border-color: #ffcccc; }
+.qty-btn.qty-minus:active { background: #ffd6d6; transform: scale(0.93); }
+.qty-btn.qty-plus  { background: #f0fff4; color: #2b9348; border-color: #b7e4c7; }
+.qty-btn.qty-plus:active  { background: #d4f5de; transform: scale(0.93); }
 /* ช่องจำนวน: แคบลงให้พอดี 1-999 */
 .qty-input { width: 36px; height: 34px; text-align: center; font-size: 15px; border: 1.5px solid #ddd; border-radius: 8px; font-family: 'Sarabun', sans-serif; font-weight: 700; padding: 0; }
 .subtotal { font-size: 13px; font-weight: 600; text-align: right; }

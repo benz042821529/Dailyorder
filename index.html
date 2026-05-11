@@ -87,7 +87,7 @@ function setupDelegation() {
       updateShopSubtotal(id);
       updateTotal();
     }
-    if (e.target.classList.contains('price-input')) {
+    if (e.target.classList.contains('price-input') || e.target.classList.contains('price-inline-input')) {
       const id = parseInt(e.target.dataset.id);
       prices[id] = Math.max(0, parseFloat(e.target.value) || 0);
       updateRow(id);
@@ -141,24 +141,28 @@ function renderOrder() {
         <span class="shop-subtotal" data-shop="${sid}">${sub > 0 ? fmt(sub) : ''}</span>
       </div>
       <div class="shop-body">
-        <div class="col-header order-cols">
-          <span class="col-label">สินค้า</span>
+        <div class="col-header order-cols-new">
+          <span class="col-label">สินค้า / ราคา</span>
           <span class="col-label r">จำนวน</span>
-          <span class="col-label r">ราคา/หน่วย</span>
           <span class="col-label r">รวม</span>
         </div>
         ${prods.map(p => {
           const q = qty[p.id]||0;
           const pr = prices[p.id]||0;
           const sub = q * pr;
-          return `<div class="product-row order-cols">
-            <div><div class="product-name">${p.name}</div><div class="product-unit">${p.unit}</div></div>
+          return `<div class="product-row order-cols-new">
+            <div>
+              <div class="product-name">${p.name}</div>
+              <div class="product-price-row">
+                <span class="product-unit">${p.unit} · ฿</span>
+                <input class="price-inline-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="${pr||''}" data-id="${p.id}"/>
+              </div>
+            </div>
             <div class="qty-control">
               <button class="qty-btn" data-id="${p.id}" data-d="-1">−</button>
               <input class="qty-input" type="number" min="0" inputmode="numeric" value="${q}" data-id="${p.id}"/>
               <button class="qty-btn" data-id="${p.id}" data-d="1">+</button>
             </div>
-            <input class="price-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="${pr||''}" data-id="${p.id}"/>
             <div class="subtotal subtotal-cell${sub===0?' zero':''}" data-id="${p.id}">${sub>0?fmt(sub):'-'}</div>
           </div>`;
         }).join('')}

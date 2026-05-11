@@ -46,6 +46,7 @@ function init() {
   shops = DB.getShops();
   products = DB.getProducts();
   renderShops();
+  setupDelegation();
 }
 
 function renderShops() {
@@ -60,9 +61,16 @@ function renderShops() {
         <div class="manage-meta">${count} สินค้า</div>
       </div>
       <button class="btn btn-red" style="height:32px;padding:0 12px;font-size:13px;flex:none;"
-        onclick="deleteShop(${s.id})">ลบ</button>
+        data-delete-shop="${s.id}">ลบ</button>
     </div>`;
   }).join('');
+}
+
+function setupDelegation() {
+  document.getElementById('shop-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-delete-shop]');
+    if (btn) deleteShop(parseInt(btn.dataset.deleteShop));
+  });
 }
 
 function addShop() {

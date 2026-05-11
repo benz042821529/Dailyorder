@@ -63,6 +63,16 @@ function init() {
   document.getElementById('order-count').textContent = 'ทั้งหมด ' + orders.length + ' รายการ';
   buildMonthFilter();
   renderHistory();
+  setupDelegation();
+}
+
+function setupDelegation() {
+  document.getElementById('modal-btns').addEventListener('click', e => {
+    const copyBtn = e.target.closest('[data-copy-order]');
+    if (copyBtn) { copyOrder(parseInt(copyBtn.dataset.copyOrder)); return; }
+    const delBtn = e.target.closest('[data-delete-order]');
+    if (delBtn) deleteOrder(parseInt(delBtn.dataset.deleteOrder));
+  });
 }
 
 function getMonthKey(dateStr) {
@@ -172,8 +182,8 @@ function showOrder(idx) {
   </div>`;
 
   openModal('รายการสั่งของ', body,
-    `<button class="btn" style="flex:1" onclick="copyOrder(${idx})">💬 คัดลอก LINE</button>
-     <button class="btn btn-red" style="flex:1" onclick="deleteOrder(${idx})">🗑 ลบ</button>
+    `<button class="btn" style="flex:1" data-copy-order="${idx}">💬 คัดลอก LINE</button>
+     <button class="btn btn-red" style="flex:1" data-delete-order="${idx}">🗑 ลบ</button>
      <button class="btn" style="flex:1 1 100%" onclick="closeModal()">ปิด</button>`);
 }
 

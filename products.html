@@ -66,6 +66,18 @@ function init() {
   shops = DB.getShops();
   products = DB.getProducts();
   refreshShopSelect();
+  setupDelegation();
+}
+
+function setupDelegation() {
+  document.getElementById('view-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-delete-product]');
+    if (btn) deleteProduct(parseInt(btn.dataset.deleteProduct));
+  });
+  document.getElementById('view-price').addEventListener('click', e => {
+    const btn = e.target.closest('[data-save-price]');
+    if (btn) savePrice(parseInt(btn.dataset.savePrice));
+  });
 }
 
 function switchView(v) {
@@ -120,7 +132,7 @@ function renderPriceEdit() {
             <input class="price-edit-input" type="number" min="0" step="0.01" inputmode="decimal"
               placeholder="0" value="${p.price||''}"
               id="price-${p.id}" />
-            <button class="btn btn-green price-save-btn" onclick="savePrice(${p.id})">บันทึก</button>
+            <button class="btn btn-green price-save-btn" data-save-price="${p.id}">บันทึก</button>
           </div>`).join('')}
       </div>`;
   };
@@ -164,7 +176,7 @@ function renderManage() {
             <div class="manage-meta">${p.unit}${p.price ? ' · ราคา ' + fmt(p.price) : ' · ยังไม่ระบุราคา'}</div>
           </div>
           <button class="btn btn-red" style="height:32px;padding:0 12px;font-size:13px;flex:none;"
-            onclick="deleteProduct(${p.id})">ลบ</button>
+            data-delete-product="${p.id}">ลบ</button>
         </div>`).join('');
   };
 

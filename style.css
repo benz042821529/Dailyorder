@@ -1,0 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', sans-serif; background: #f4f4f0; color: #1a1a1a; min-height: 100vh; }
+.container { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+/* HEADER */
+.header { background: #1a1a1a; color: #fff; padding: 16px 20px; border-radius: 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+.header-back { color: #aaa; text-decoration: none; font-size: 20px; line-height: 1; }
+.header-back:hover { color: #fff; }
+.header-text h1 { font-size: 18px; font-weight: 600; }
+.header-text p { font-size: 12px; color: #aaa; margin-top: 2px; }
+
+/* NAV */
+.nav { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 14px; }
+.nav a { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px; font-size: 12px; font-family: 'Sarabun', sans-serif; border: 1.5px solid #ddd; border-radius: 10px; background: #fff; color: #666; text-decoration: none; transition: all 0.15s; }
+.nav a span { font-size: 18px; }
+.nav a.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; font-weight: 500; }
+.nav a:hover:not(.active) { background: #f0f0ec; }
+
+/* CARD */
+.card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #e8e8e4; }
+.card-title { font-size: 13px; color: #999; font-weight: 500; margin-bottom: 12px; }
+
+/* SHOP BLOCK */
+.shop-block { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; margin-bottom: 14px; overflow: hidden; }
+.shop-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #f8f8f4; border-bottom: 1px solid #eee; }
+.shop-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.shop-name-label { font-size: 15px; font-weight: 600; flex: 1; }
+.shop-subtotal { font-size: 13px; font-weight: 600; color: #555; }
+.shop-body { padding: 0 16px; }
+
+/* TABLE */
+.col-header { display: grid; gap: 6px; padding: 8px 0 6px; border-bottom: 1px solid #eee; }
+.col-label { font-size: 11px; color: #999; font-weight: 500; letter-spacing: 0.3px; }
+.col-label.r { text-align: right; }
+
+/* ORDER ROW */
+.order-cols { grid-template-columns: 1fr 86px 74px 66px; }
+.product-row { display: grid; gap: 6px; align-items: center; padding: 9px 0; border-bottom: 1px solid #f4f4f0; }
+.product-row:last-child { border-bottom: none; }
+.product-name { font-size: 14px; font-weight: 500; }
+.product-unit { font-size: 11px; color: #aaa; }
+.qty-control { display: flex; align-items: center; gap: 3px; }
+.qty-btn { width: 26px; height: 26px; border: 1px solid #ddd; border-radius: 6px; background: #f8f8f6; color: #1a1a1a; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Sarabun', sans-serif; flex-shrink: 0; }
+.qty-btn:active { background: #eee; }
+.qty-input { width: 30px; height: 26px; text-align: center; font-size: 13px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Sarabun', sans-serif; }
+.price-input { width: 100%; height: 26px; text-align: right; font-size: 13px; border: 1px solid #ddd; border-radius: 6px; padding: 0 5px; font-family: 'Sarabun', sans-serif; background: #fafaf8; }
+.price-input:focus { outline: none; border-color: #1a1a1a; }
+.subtotal { font-size: 13px; font-weight: 600; text-align: right; }
+.subtotal.zero { color: #ccc; }
+
+/* TOTAL BOX */
+.total-box { background: #1a1a1a; color: #fff; border-radius: 10px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.total-label { font-size: 14px; color: #aaa; }
+.total-amount { font-size: 22px; font-weight: 600; }
+
+/* BUTTONS */
+.btn { height: 42px; padding: 0 16px; border: 1.5px solid #ddd; border-radius: 8px; background: #fff; color: #1a1a1a; font-size: 14px; font-family: 'Sarabun', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn:hover { background: #f4f4f0; }
+.btn:active { transform: scale(0.98); }
+.btn-dark { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.btn-dark:hover { background: #333; }
+.btn-red { background: #fff0f0; color: #cc3333; border-color: #ffcccc; }
+.btn-green { background: #f0fff4; color: #2b9348; border-color: #b7e4c7; }
+.btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.export-btn { height: 44px; border: 1.5px solid #ddd; border-radius: 8px; background: #fff; color: #1a1a1a; font-size: 14px; font-family: 'Sarabun', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.export-btn:hover { background: #f4f4f0; }
+.export-btn:active { transform: scale(0.98); }
+.export-btn.full { grid-column: span 2; background: #f4f4f0; }
+
+/* FORM */
+.input-group { display: flex; gap: 8px; margin-bottom: 10px; }
+.input-group input, .input-group select { flex: 1; height: 38px; padding: 0 12px; font-size: 14px; font-family: 'Sarabun', sans-serif; border: 1.5px solid #ddd; border-radius: 8px; background: #fafaf8; color: #1a1a1a; }
+.input-group input:focus, .input-group select:focus { outline: none; border-color: #1a1a1a; }
+
+/* MANAGE ROWS */
+.manage-row { background: #fafaf8; border: 1px solid #e8e8e4; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+.manage-info { flex: 1; }
+.manage-name { font-size: 14px; font-weight: 500; }
+.manage-meta { font-size: 12px; color: #999; margin-top: 2px; }
+.shop-group-title { font-size: 13px; font-weight: 600; color: #555; padding: 8px 0 8px; border-bottom: 1px solid #eee; margin-bottom: 8px; margin-top: 16px; display: flex; align-items: center; gap: 6px; }
+.shop-group-title:first-child { margin-top: 0; }
+
+/* PRICE EDIT */
+.price-edit-row { display: grid; grid-template-columns: 1fr 100px auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #f4f4f0; }
+.price-edit-row:last-child { border-bottom: none; }
+.price-edit-name { font-size: 14px; font-weight: 500; }
+.price-edit-unit { font-size: 11px; color: #aaa; }
+.price-edit-input { height: 32px; text-align: right; font-size: 13px; border: 1.5px solid #ddd; border-radius: 6px; padding: 0 8px; font-family: 'Sarabun', sans-serif; width: 100%; }
+.price-edit-input:focus { outline: none; border-color: #1a1a1a; }
+.price-save-btn { height: 32px; padding: 0 12px; font-size: 13px; white-space: nowrap; }
+
+/* HISTORY */
+.month-section { margin-bottom: 20px; }
+.month-title { font-size: 15px; font-weight: 600; color: #1a1a1a; padding: 10px 0 8px; border-bottom: 2px solid #1a1a1a; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.month-total { font-size: 13px; font-weight: 500; color: #555; }
+.history-item { background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+.history-item:hover { border-color: #bbb; background: #fafaf8; }
+.history-date { font-size: 12px; color: #999; }
+.history-desc { font-size: 14px; margin-top: 4px; }
+.history-total { font-size: 15px; font-weight: 600; margin-top: 4px; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: #fff; border-radius: 14px; padding: 20px; width: 100%; max-width: 380px; max-height: 85vh; overflow-y: auto; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+.modal-shop-label { font-size: 12px; font-weight: 600; color: #555; padding: 10px 0 5px; border-bottom: 1px solid #f0f0f0; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+.modal-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f8f8f8; font-size: 14px; }
+.modal-total { display: flex; justify-content: space-between; padding-top: 12px; margin-top: 8px; border-top: 1.5px solid #1a1a1a; }
+.modal-total-label { font-size: 14px; color: #666; }
+.modal-total-amount { font-size: 18px; font-weight: 600; }
+.modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-family: 'Sarabun', sans-serif; opacity: 0; transition: opacity 0.3s; z-index: 200; white-space: nowrap; }
+.toast.show { opacity: 1; }
+
+.empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .shop-block { break-inside: avoid; }
+}
+
+/* ============================================
+   MOBILE RESPONSIVE (เพิ่มเติม)
+   ============================================ */
+
+/* ทำให้ number input ไม่แสดงลูกศรบนมือถือ */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+@media (max-width: 480px) {
+
+  .container { padding: 10px; }
+
+  /* Header */
+  .header { padding: 12px 14px; border-radius: 10px; }
+  .header-text h1 { font-size: 16px; }
+
+  /* Nav */
+  .nav { gap: 4px; }
+  .nav a { padding: 8px 2px; font-size: 11px; border-radius: 8px; }
+  .nav a span { font-size: 16px; }
+
+  /* Order table — stack ราคา/หน่วย และ รวม ให้แคบลง */
+  .order-cols {
+    grid-template-columns: 1fr 80px 62px 56px;
+    gap: 4px;
+  }
+  .shop-body { padding: 0 10px; }
+  .shop-header { padding: 10px 12px; }
+
+  .product-name { font-size: 13px; }
+  .product-unit { font-size: 10px; }
+
+  /* qty control กว้างขึ้น กดง่ายขึ้น */
+  .qty-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    border-radius: 8px;
+  }
+  .qty-input {
+    width: 34px;
+    height: 30px;
+    font-size: 13px;
+  }
+  .price-input {
+    height: 30px;
+    font-size: 12px;
+    padding: 0 3px;
+  }
+  .subtotal { font-size: 12px; }
+  .col-label { font-size: 10px; }
+
+  /* Total box */
+  .total-box { padding: 12px 14px; }
+  .total-amount { font-size: 20px; }
+
+  /* Buttons */
+  .btn-row { gap: 6px; }
+  .btn { height: 44px; font-size: 14px; }
+  .export-btn { height: 44px; font-size: 13px; }
+
+  /* Modal btns — wrap เป็น 2 แถว */
+  .modal-btns {
+    flex-wrap: wrap;
+  }
+  .modal-btns .btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    font-size: 13px;
+    padding: 0 8px;
+  }
+  .modal-box { padding: 16px; border-radius: 12px; }
+
+  /* Price edit row — ย่อราคาและปุ่ม */
+  .price-edit-row {
+    grid-template-columns: 1fr 80px auto;
+    gap: 6px;
+  }
+  .price-save-btn {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  /* Products tab buttons */
+  #tab-add-btn, #tab-price-btn, #tab-list-btn {
+    font-size: 12px;
+    padding: 0 6px;
+    height: 38px;
+  }
+
+  /* History */
+  .month-title { font-size: 13px; }
+  .history-item { padding: 10px; }
+
+  /* Toast — เพิ่ม bottom ให้ไม่โดน keyboard */
+  .toast { bottom: env(safe-area-inset-bottom, 16px); bottom: 16px; font-size: 13px; }
+
+  /* input-group */
+  .input-group input, .input-group select { height: 42px; font-size: 15px; }
+}
+
+/* Safe area สำหรับ iPhone notch */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .container { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+}

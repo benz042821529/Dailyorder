@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สั่งของประจำวัน</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-text">
+      <h1>🛒 สั่งของประจำวัน</h1>
+      <p id="today-date"></p>
+    </div>
+  </div>
+
+  <nav class="nav no-print">
+    <a href="index.html" class="active"><span>🛒</span>สั่งของ</a>
+    <a href="products.html"><span>📦</span>สินค้า</a>
+    <a href="shops.html"><span>🏪</span>ร้านค้า</a>
+    <a href="history.html"><span>📋</span>ประวัติ</a>
+  </nav>
+
+  <div id="order-list"></div>
+
+  <div class="total-box">
+    <span class="total-label">ยอดรวมทั้งหมด</span>
+    <span class="total-amount" id="grand-total">฿0</span>
+  </div>
+
+  <div class="btn-row no-print">
+    <button class="btn btn-dark" onclick="saveOrder()">💾 บันทึกรายการ</button>
+    <button class="btn" onclick="clearOrder()">🗑 ล้างทั้งหมด</button>
+  </div>
+  <div class="export-grid no-print">
+    <button class="export-btn" onclick="exportCSV()">📄 Export CSV</button>
+    <button class="export-btn" onclick="copyLINE()">💬 คัดลอกส่ง LINE</button>
+    <button class="export-btn full" onclick="window.print()">🖨️ Print / PDF</button>
+  </div>
+</div>
+
+<div id="modal" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script>
+let shops = [], products = [];
+let qty = {}, prices = {};
+
+function init() {
+  shops = DB.getShops();
+  products = DB.getProducts();
+  // โหลดราคาจาก products เป็น default
+  products.forEach(p => { prices[p.id] = p.price || 0; });
+  document.getElementById('today-date').textContent = todayStr();
+  renderOrder();
+}
+
+function renderOrder() {
+  const el = document.getElementById('order-list');
+  if (!products.length) {
+    el.innerHTML = '<div class="empty">ยังไม่มีสินค้า<br>เพิ่มได้ที่เมนู "สินค้า"</div>';
+    updateTotal(); return;
+  }
+  const g = groupByShop(products, shops);
+
+  const renderBlock = (shopName, color, prods) => {
+    if (!prods || !prods.length) return '';
+    const sub = prods.reduce((s,p) => s + (qty[p.id]||0)*(prices[p.id]||0), 0);
+    return `<div class="shop-block">
+      <div class="shop-header">
+        <div class="shop-dot" style="background:${color}"></div>
+        <span class="shop-name-label">${shopName}</span>
+        <span class="shop-subtotal">${sub > 0 ? fmt(sub) : ''}</span>
+      </div>
+      <div class="shop-body">
+        <div class="col-header order-cols">
+          <span class="col-label">สินค้า</span>
+          <span class="col-label r">จำนวน</span>
+          <span class="col-label r">ราคา/หน่วย</span>
+          <span class="col-label r">รวม</span>
+        </div>
+        ${prods.map(p => {
+          const q = qty[p.id]||0;
+          const pr = prices[p.id]||0;
+          const sub = q * pr;
+          return `<div class="product-row order-cols">
+            <div><div class="product-name">${p.name}</div><div class="product-unit">${p.unit}</div></div>
+            <div class="qty-control">
+              <button class="qty-btn" onclick="changeQty(${p.id},-1)">−</button>
+              <input class="qty-input" type="number" min="0" inputmode="numeric" value="${q}" onchange="setQty(${p.id},this.value)"/>
+              <button class="qty-btn" onclick="changeQty(${p.id},1)">+</button>
+            </div>
+            <input class="price-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" value="${pr||''}" onchange="setPrice(${p.id},this.value)"/>
+            <div class="subtotal ${sub===0?'zero':''}">${sub>0?fmt(sub):'-'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  };
+
+  let html = '';
+  shops.forEach(s => { html += renderBlock(s.name, s.color, g[s.id]); });
+  if (g[0] && g[0].length) html += renderBlock('ไม่ระบุร้าน', '#aaa', g[0]);
+  el.innerHTML = html || '<div class="empty">ยังไม่มีสินค้า</div>';
+  updateTotal();
+}
+
+function changeQty(id, d) { qty[id] = Math.max(0,(qty[id]||0)+d); renderOrder(); }
+function setQty(id, v) { qty[id] = Math.max(0, parseFloat(v)||0); updateTotal(); }
+function setPrice(id, v) {
+  prices[id] = Math.max(0, parseFloat(v)||0);
+  updateTotal();
+}
+function updateTotal() {
+  const t = products.reduce((s,p) => s + (qty[p.id]||0)*(prices[p.id]||0), 0);
+  document.getElementById('grand-total').textContent = fmt(t);
+}
+function clearOrder() { qty = {}; products.forEach(p=>{ prices[p.id]=p.price||0; }); renderOrder(); toast('ล้างรายการเรียบร้อย'); }
+
+function getItems() {
+  return products.filter(p=>(qty[p.id]||0)>0).map(p => ({
+    ...p, qty:qty[p.id], price:prices[p.id]||0, subtotal:(qty[p.id]||0)*(prices[p.id]||0)
+  }));
+}
+function getTotal() { return getItems().reduce((s,i)=>s+i.subtotal,0); }
+
+function saveOrder() {
+  const items = getItems();
+  if (!items.length) { toast('กรุณาใส่จำนวนสินค้าก่อน'); return; }
+  DB.addOrder({ date: new Date().toISOString(), items, total: getTotal() });
+  toast('บันทึกเรียบร้อย ' + items.length + ' รายการ');
+}
+
+function exportCSV() {
+  const items = getItems();
+  if (!items.length) { toast('ยังไม่มีรายการสินค้า'); return; }
+  const rows = [['\uFEFFร้าน','สินค้า','จำนวน','หน่วย','ราคา/หน่วย','รวม'],
+    ...items.map(i=>[getShop(shops,i.shopId).name, i.name, i.qty, i.unit, i.price, i.subtotal]),
+    ['','','','','ยอดรวม',getTotal()]];
+  const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'order-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('ดาวน์โหลด CSV แล้ว');
+}
+
+function copyLINE() {
+  const items = getItems();
+  if (!items.length) { toast('ยังไม่มีรายการสินค้า'); return; }
+  const g = {};
+  items.forEach(i => { const sid=i.shopId||0; if(!g[sid])g[sid]=[]; g[sid].push(i); });
+  let lines = [`รายการสั่งของ ${todayStr()}`, ''];
+  shops.forEach(s => {
+    if (!g[s.id]||!g[s.id].length) return;
+    lines.push(`[ ${s.name} ]`);
+    g[s.id].forEach(i => lines.push(`- ${i.name} ${i.qty} ${i.unit}`));
+    lines.push('');
+  });
+  if (g[0]&&g[0].length) {
+    lines.push('[ ไม่ระบุร้าน ]');
+    g[0].forEach(i => lines.push(`- ${i.name} ${i.qty} ${i.unit}`));
+  }
+  fallbackCopy(lines.join('\n').trim());
+}
+
+// init() called by data.js after Firebase ready
+</script>
+</body>
+</html>

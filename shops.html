@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการร้านค้า</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-text">
+      <h1>🏪 จัดการร้านค้า</h1>
+      <p>เพิ่มและลบร้านค้า</p>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html"><span>🛒</span>สั่งของ</a>
+    <a href="products.html"><span>📦</span>สินค้า</a>
+    <a href="shops.html" class="active"><span>🏪</span>ร้านค้า</a>
+    <a href="history.html"><span>📋</span>ประวัติ</a>
+  </nav>
+
+  <div class="card">
+    <p class="card-title">เพิ่มร้านค้าใหม่</p>
+    <div class="input-group">
+      <input type="text" id="new-shop-name" placeholder="ชื่อร้านค้า" />
+      <input type="color" id="new-shop-color" value="#e85d04"
+        style="flex:0.2;padding:2px 4px;cursor:pointer;border-radius:8px;border:1.5px solid #ddd;height:38px;"
+        title="เลือกสีร้าน" />
+    </div>
+    <button class="btn btn-dark" onclick="addShop()" style="width:100%;">+ เพิ่มร้านค้า</button>
+  </div>
+
+  <div id="shop-list"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script>
+let shops = [], products = [];
+
+function init() {
+  shops = DB.getShops();
+  products = DB.getProducts();
+  renderShops();
+}
+
+function renderShops() {
+  const el = document.getElementById('shop-list');
+  if (!shops.length) { el.innerHTML = '<div class="empty">ยังไม่มีร้านค้า</div>'; return; }
+  el.innerHTML = shops.map(s => {
+    const count = products.filter(p => p.shopId === s.id).length;
+    return `<div class="manage-row">
+      <div style="width:16px;height:16px;border-radius:50%;background:${s.color};flex-shrink:0;"></div>
+      <div class="manage-info">
+        <div class="manage-name">${s.name}</div>
+        <div class="manage-meta">${count} สินค้า</div>
+      </div>
+      <button class="btn btn-red" style="height:32px;padding:0 12px;font-size:13px;flex:none;"
+        onclick="deleteShop(${s.id})">ลบ</button>
+    </div>`;
+  }).join('');
+}
+
+function addShop() {
+  const name = document.getElementById('new-shop-name').value.trim();
+  const color = document.getElementById('new-shop-color').value;
+  if (!name) { toast('กรุณาใส่ชื่อร้านค้า'); return; }
+  if (shops.find(s => s.name === name)) { toast('มีร้านนี้อยู่แล้ว'); return; }
+  shops.push({ id: Date.now(), name, color });
+  DB.setShops(shops);
+  document.getElementById('new-shop-name').value = '';
+  renderShops();
+  toast('เพิ่มร้าน "' + name + '" เรียบร้อย');
+}
+
+function deleteShop(id) {
+  const s = shops.find(x => x.id === id);
+  const count = products.filter(p => p.shopId === id).length;
+  if (!confirm('ลบร้าน "' + s.name + '"?\nสินค้า ' + count + ' รายการจะถูกย้ายไป "ไม่ระบุร้าน"')) return;
+  shops = shops.filter(x => x.id !== id);
+  products = products.map(p => p.shopId===id ? {...p, shopId:0} : p);
+  DB.setShops(shops);
+  DB.setProducts(products);
+  renderShops();
+  toast('ลบร้านเรียบร้อย');
+}
+
+// init() called by data.js after Firebase ready
+</script>
+</body>
+</html>

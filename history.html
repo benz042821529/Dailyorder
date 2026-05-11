@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ประวัติการสั่งซื้อ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-text">
+      <h1>📋 ประวัติการสั่งซื้อ</h1>
+      <p id="order-count"></p>
+    </div>
+  </div>
+
+  <nav class="nav no-print">
+    <a href="index.html"><span>🛒</span>สั่งของ</a>
+    <a href="products.html"><span>📦</span>สินค้า</a>
+    <a href="shops.html"><span>🏪</span>ร้านค้า</a>
+    <a href="history.html" class="active"><span>📋</span>ประวัติ</a>
+  </nav>
+
+  <!-- ตัวกรองเดือน -->
+  <div class="card no-print" style="padding:12px 14px;">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <label style="font-size:13px;color:#999;white-space:nowrap;">กรองเดือน:</label>
+      <select id="month-filter" onchange="renderHistory()"
+        style="flex:1;height:36px;padding:0 10px;font-size:14px;font-family:'Sarabun',sans-serif;border:1.5px solid #ddd;border-radius:8px;background:#fafaf8;">
+        <option value="">ทั้งหมด</option>
+      </select>
+      <button class="btn btn-red" style="height:36px;padding:0 12px;font-size:13px;white-space:nowrap;"
+        onclick="clearAllConfirm()">ล้างทั้งหมด</button>
+    </div>
+  </div>
+
+  <!-- Export รายเดือน -->
+  <div class="export-grid no-print" style="margin-bottom:12px;">
+    <button class="export-btn" onclick="exportMonthCSV()">📄 Export CSV เดือนนี้</button>
+    <button class="export-btn" onclick="window.print()">🖨️ Print เดือนนี้</button>
+  </div>
+
+  <div id="history-content"></div>
+</div>
+
+<div id="modal" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script>
+let shops = [], orders = [];
+
+function init() {
+  shops = DB.getShops();
+  orders = DB.getOrders();
+  document.getElementById('order-count').textContent = 'ทั้งหมด ' + orders.length + ' รายการ';
+  buildMonthFilter();
+  renderHistory();
+}
+
+function getMonthKey(dateStr) {
+  const d = new Date(dateStr);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+function monthLabel(key) {
+  const [y, m] = key.split('-');
+  const d = new Date(parseInt(y), parseInt(m)-1, 1);
+  return d.toLocaleDateString('th-TH', {year:'numeric', month:'long'});
+}
+
+function buildMonthFilter() {
+  const keys = [...new Set(orders.map(o => getMonthKey(o.date)))].sort().reverse();
+  const sel = document.getElementById('month-filter');
+  keys.forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = monthLabel(k);
+    sel.appendChild(opt);
+  });
+  // ตั้งค่าเริ่มต้นเป็นเดือนปัจจุบัน
+  const thisMonth = getMonthKey(new Date().toISOString());
+  if (keys.includes(thisMonth)) sel.value = thisMonth;
+}
+
+function getFilteredOrders() {
+  const filter = document.getElementById('month-filter').value;
+  if (!filter) return orders;
+  return orders.filter(o => getMonthKey(o.date) === filter);
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-content');
+  const filtered = getFilteredOrders();
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty">ยังไม่มีประวัติในช่วงนี้</div>';
+    return;
+  }
+
+  // จัดกลุ่มตามเดือน
+  const byMonth = {};
+  filtered.forEach(o => {
+    const mk = getMonthKey(o.date);
+    if (!byMonth[mk]) byMonth[mk] = [];
+    byMonth[mk].push(o);
+  });
+
+  const months = Object.keys(byMonth).sort().reverse();
+  let html = '';
+
+  months.forEach(mk => {
+    const mos = byMonth[mk];
+    const monthTotal = mos.reduce((s,o) => s+(o.total||0), 0);
+    html += `<div class="month-section">
+      <div class="month-title">
+        <span>${monthLabel(mk)}</span>
+        <span class="month-total">${mos.length} ครั้ง · รวม ${fmt(monthTotal)}</span>
+      </div>
+      ${mos.map((o,i) => {
+        const realIdx = orders.indexOf(o);
+        const d = new Date(o.date).toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+        return `<div class="history-item" onclick="showOrder(${realIdx})">
+          <div class="history-date">${d}</div>
+          <div class="history-desc">${o.items.length} รายการ: ${o.items.slice(0,3).map(x=>x.name).join(', ')}${o.items.length>3?'...':''}</div>
+          <div class="history-total">${fmt(o.total||0)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function showOrder(idx) {
+  const o = orders[idx];
+  const d = new Date(o.date).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  const g = {};
+  o.items.forEach(item => { const sid=item.shopId||0; if(!g[sid])g[sid]=[]; g[sid].push(item); });
+
+  let body = `<p style="font-size:12px;color:#999;margin-bottom:10px;">${d}</p>`;
+
+  shops.forEach(s => {
+    if (!g[s.id]||!g[s.id].length) return;
+    body += `<div class="modal-shop-label">${mkDot(s.color)} ${s.name}</div>`;
+    g[s.id].forEach(x => {
+      body += `<div class="modal-row">
+        <span>${x.name} ${x.qty} ${x.unit}</span>
+        <span style="font-weight:600">${x.subtotal?fmt(x.subtotal):'-'}</span>
+      </div>`;
+    });
+  });
+  if (g[0]&&g[0].length) {
+    body += `<div class="modal-shop-label">${mkDot('#aaa')} ไม่ระบุร้าน</div>`;
+    g[0].forEach(x => {
+      body += `<div class="modal-row">
+        <span>${x.name} ${x.qty} ${x.unit}</span>
+        <span style="font-weight:600">${x.subtotal?fmt(x.subtotal):'-'}</span>
+      </div>`;
+    });
+  }
+  body += `<div class="modal-total">
+    <span class="modal-total-label">ยอดรวม</span>
+    <span class="modal-total-amount">${fmt(o.total||0)}</span>
+  </div>`;
+
+  openModal('รายการสั่งของ', body,
+    `<button class="btn" style="flex:1" onclick="copyOrder(${idx})">💬 คัดลอก LINE</button>
+     <button class="btn btn-red" style="flex:1" onclick="deleteOrder(${idx})">🗑 ลบ</button>
+     <button class="btn" style="flex:1 1 100%" onclick="closeModal()">ปิด</button>`);
+}
+
+function copyOrder(idx) {
+  const o = orders[idx];
+  const d = new Date(o.date).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const g = {};
+  o.items.forEach(item => { const sid=item.shopId||0; if(!g[sid])g[sid]=[]; g[sid].push(item); });
+  let lines = [`รายการสั่งของ ${d}`, ''];
+  shops.forEach(s => {
+    if (!g[s.id]||!g[s.id].length) return;
+    lines.push(`[ ${s.name} ]`);
+    g[s.id].forEach(x => lines.push(`- ${x.name} ${x.qty} ${x.unit}`));
+    lines.push('');
+  });
+  if (g[0]&&g[0].length) {
+    lines.push('[ ไม่ระบุร้าน ]');
+    g[0].forEach(x => lines.push(`- ${x.name} ${x.qty} ${x.unit}`));
+  }
+  fallbackCopy(lines.join('\n').trim());
+  closeModal();
+}
+
+function deleteOrder(idx) {
+  if (!confirm('ลบรายการนี้?')) return;
+  orders.splice(idx, 1);
+  DB.setOrders(orders);
+  closeModal();
+  document.getElementById('order-count').textContent = 'ทั้งหมด ' + orders.length + ' รายการ';
+  renderHistory();
+  toast('ลบเรียบร้อย');
+}
+
+function clearAllConfirm() {
+  const filter = document.getElementById('month-filter').value;
+  const label = filter ? monthLabel(filter) : 'ทั้งหมด';
+  if (!confirm('ลบประวัติ ' + label + ' ทั้งหมดใช่ไหม?')) return;
+  if (filter) {
+    orders = orders.filter(o => getMonthKey(o.date) !== filter);
+  } else {
+    orders = [];
+  }
+  DB.setOrders(orders);
+  document.getElementById('order-count').textContent = 'ทั้งหมด ' + orders.length + ' รายการ';
+  renderHistory();
+  toast('ลบเรียบร้อย');
+}
+
+function exportMonthCSV() {
+  const filter = document.getElementById('month-filter').value;
+  const filtered = getFilteredOrders();
+  if (!filtered.length) { toast('ไม่มีข้อมูลในช่วงนี้'); return; }
+
+  const rows = [['\uFEFFวันที่','ร้าน','สินค้า','จำนวน','หน่วย','ราคา/หน่วย','รวม']];
+  filtered.forEach(o => {
+    const d = new Date(o.date).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});
+    o.items.forEach(i => {
+      rows.push([d, getShop(shops,i.shopId).name, i.name, i.qty, i.unit, i.price||0, i.subtotal||0]);
+    });
+    rows.push([d,'','','','','ยอดรวม',o.total||0]);
+    rows.push([]);
+  });
+
+  const csv = rows.map(r => r.map(c=>`"${c}"`).join(',')).join('\n');
+  const label = filter ? filter : 'all';
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'history-' + label + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('ดาวน์โหลด CSV แล้ว');
+}
+
+// init() called by data.js after Firebase ready
+</script>
+</body>
+</html>

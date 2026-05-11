@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการสินค้า</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-text">
+      <h1>📦 จัดการสินค้า</h1>
+      <p>เพิ่ม ลบ และแก้ไขราคาสินค้า</p>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html"><span>🛒</span>สั่งของ</a>
+    <a href="products.html" class="active"><span>📦</span>สินค้า</a>
+    <a href="shops.html"><span>🏪</span>ร้านค้า</a>
+    <a href="history.html"><span>📋</span>ประวัติ</a>
+  </nav>
+
+  <!-- แท็บ -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="btn btn-dark" id="tab-add-btn" onclick="switchView('add')" style="flex:1;">+ เพิ่มสินค้า</button>
+    <button class="btn" id="tab-price-btn" onclick="switchView('price')" style="flex:1;">✏️ แก้ไขราคา</button>
+    <button class="btn" id="tab-list-btn" onclick="switchView('list')" style="flex:1;">📋 รายการ</button>
+  </div>
+
+  <!-- ฟอร์มเพิ่มสินค้า -->
+  <div id="view-add">
+    <div class="card">
+      <p class="card-title">เพิ่มสินค้าใหม่</p>
+      <div class="input-group">
+        <input type="text" id="new-name" placeholder="ชื่อสินค้า" />
+        <input type="text" id="new-unit" placeholder="หน่วย" style="flex:0.45;" />
+      </div>
+      <div class="input-group">
+        <select id="new-shop-sel"><option value="">-- เลือกร้าน --</option></select>
+        <input type="number" id="new-price" placeholder="ราคาเริ่มต้น (บาท)" min="0" inputmode="decimal" />
+      </div>
+      <button class="btn btn-dark" onclick="addProduct()" style="width:100%;">+ เพิ่มสินค้า</button>
+    </div>
+  </div>
+
+  <!-- แก้ไขราคา -->
+  <div id="view-price" style="display:none;">
+    <div id="price-edit-list"></div>
+  </div>
+
+  <!-- รายการสินค้า -->
+  <div id="view-list" style="display:none;">
+    <div id="product-manage-list"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script>
+let shops = [], products = [];
+
+function init() {
+  shops = DB.getShops();
+  products = DB.getProducts();
+  refreshShopSelect();
+}
+
+function switchView(v) {
+  ['add','price','list'].forEach(x => {
+    document.getElementById('view-'+x).style.display = x===v ? 'block' : 'none';
+  });
+  document.getElementById('tab-add-btn').className = 'btn' + (v==='add'?' btn-dark':'');
+  document.getElementById('tab-price-btn').className = 'btn' + (v==='price'?' btn-dark':'');
+  document.getElementById('tab-list-btn').className = 'btn' + (v==='list'?' btn-dark':'');
+  if (v==='price') renderPriceEdit();
+  if (v==='list') renderManage();
+}
+
+function refreshShopSelect() {
+  const sel = document.getElementById('new-shop-sel');
+  sel.innerHTML = '<option value="">-- เลือกร้าน --</option>' +
+    shops.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+// ========== เพิ่มสินค้า ==========
+function addProduct() {
+  const name = document.getElementById('new-name').value.trim();
+  const unit = document.getElementById('new-unit').value.trim() || 'ชิ้น';
+  const shopId = parseInt(document.getElementById('new-shop-sel').value) || 0;
+  const price = parseFloat(document.getElementById('new-price').value) || 0;
+  if (!name) { toast('กรุณาใส่ชื่อสินค้า'); return; }
+  products.push({ id: Date.now(), name, unit, shopId, price });
+  DB.setProducts(products);
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-unit').value = '';
+  document.getElementById('new-price').value = '';
+  toast('เพิ่ม "' + name + '" เรียบร้อย');
+}
+
+// ========== แก้ไขราคา ==========
+function renderPriceEdit() {
+  const el = document.getElementById('price-edit-list');
+  if (!products.length) { el.innerHTML = '<div class="empty">ยังไม่มีสินค้า</div>'; return; }
+  const g = groupByShop(products, shops);
+
+  let html = '';
+  const renderGroup = (shopName, color, prods) => {
+    if (!prods || !prods.length) return '';
+    return `<div class="shop-group-title">${mkDot(color)} ${shopName}</div>
+      <div class="card" style="padding:10px 14px;">
+        ${prods.map(p => `
+          <div class="price-edit-row">
+            <div>
+              <div class="price-edit-name">${p.name}</div>
+              <div class="price-edit-unit">${p.unit}</div>
+            </div>
+            <input class="price-edit-input" type="number" min="0" step="0.01" inputmode="decimal"
+              placeholder="0" value="${p.price||''}"
+              id="price-${p.id}" />
+            <button class="btn btn-green price-save-btn" onclick="savePrice(${p.id})">บันทึก</button>
+          </div>`).join('')}
+      </div>`;
+  };
+
+  shops.forEach(s => { html += renderGroup(s.name, s.color, g[s.id]); });
+  if (g[0] && g[0].length) html += renderGroup('ไม่ระบุร้าน', '#aaa', g[0]);
+  el.innerHTML = html || '<div class="empty">ยังไม่มีสินค้า</div>';
+}
+
+function savePrice(id) {
+  const val = parseFloat(document.getElementById('price-'+id).value) || 0;
+  products = products.map(p => p.id===id ? {...p, price:val} : p);
+  DB.setProducts(products);
+  toast('บันทึกราคาเรียบร้อย');
+}
+
+function saveAllPrices() {
+  products = products.map(p => {
+    const el = document.getElementById('price-'+p.id);
+    if (el) p = {...p, price: parseFloat(el.value)||0};
+    return p;
+  });
+  DB.setProducts(products);
+  toast('บันทึกราคาทั้งหมดเรียบร้อย');
+}
+
+// ========== รายการสินค้า ==========
+function renderManage() {
+  const el = document.getElementById('product-manage-list');
+  if (!products.length) { el.innerHTML = '<div class="empty">ยังไม่มีสินค้า</div>'; return; }
+  const g = groupByShop(products, shops);
+
+  let html = '';
+  const renderGroup = (shopName, color, prods) => {
+    if (!prods || !prods.length) return '';
+    return `<div class="shop-group-title">${mkDot(color)} ${shopName}</div>` +
+      prods.map(p => `
+        <div class="manage-row">
+          <div class="manage-info">
+            <div class="manage-name">${p.name}</div>
+            <div class="manage-meta">${p.unit}${p.price ? ' · ราคา ' + fmt(p.price) : ' · ยังไม่ระบุราคา'}</div>
+          </div>
+          <button class="btn btn-red" style="height:32px;padding:0 12px;font-size:13px;flex:none;"
+            onclick="deleteProduct(${p.id})">ลบ</button>
+        </div>`).join('');
+  };
+
+  shops.forEach(s => { html += renderGroup(s.name, s.color, g[s.id]); });
+  if (g[0] && g[0].length) html += renderGroup('ไม่ระบุร้าน', '#aaa', g[0]);
+  el.innerHTML = html;
+}
+
+function deleteProduct(id) {
+  const p = products.find(x => x.id===id);
+  if (!confirm('ลบ "' + p.name + '" ออกจากรายการ?')) return;
+  products = products.filter(x => x.id!==id);
+  DB.setProducts(products);
+  renderManage();
+  toast('ลบเรียบร้อย');
+}
+
+// init() called by data.js after Firebase ready
+</script>
+</body>
+</html>

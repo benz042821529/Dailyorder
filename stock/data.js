@@ -29,7 +29,8 @@ const _dbReady = new Promise(r => _dbResolve = r);
 function _firebaseReady() {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   _db = firebase.firestore();
-  _db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+  // ไม่ใช้ persistence เพราะอาจทำให้ค้างบน mobile
+  // _db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
   _dbResolve();
 }
 
@@ -161,10 +162,28 @@ function closeModalOutside(e) { if (e.target === document.getElementById('modal'
 })();
 
 // ============================================================
-//  BOOT
+//  BOOT — timeout 8 วิ ถ้า Firebase ช้าเกินก็ hide loader แล้วรันต่อ
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-  await STOCK.ready();
-  document.getElementById('fb-loader').classList.add('hide');
-  if (typeof init === 'function') init();
+  const hideLoader = () => {
+    const el = document.getElementById('fb-loader');
+    if (el) el.classList.add('hide');
+  };
+
+  const runInit = () => {
+    if (typeof init === 'function') init();
+  };
+
+  // timeout สำรอง 8 วิ
+  const timer = setTimeout(() => { hideLoader(); runInit(); }, 8000);
+
+  try {
+    await STOCK.ready();
+    clearTimeout(timer);
+  } catch(e) {
+    clearTimeout(timer);
+  } finally {
+    hideLoader();
+    runInit();
+  }
 });

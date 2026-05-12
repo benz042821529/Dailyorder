@@ -140,26 +140,8 @@ function openModal(title, bodyHtml, btnsHtml) {
 function closeModal() { document.getElementById('modal')?.classList.remove('open'); }
 function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
 
-// ============================================================
-//  LOADER
-// ============================================================
-(function injectLoader() {
-  const style = document.createElement('style');
-  style.textContent = `
-    #fb-loader{position:fixed;inset:0;background:#f0faf4;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;z-index:9999;gap:14px;transition:opacity 0.3s;}
-    #fb-loader.hide{opacity:0;pointer-events:none;}
-    .fb-spinner{width:36px;height:36px;border:3px solid #c8e6c9;border-top-color:#2e7d32;
-    border-radius:50%;animation:fb-spin 0.7s linear infinite;}
-    @keyframes fb-spin{to{transform:rotate(360deg);}}
-    #fb-loader p{font-size:14px;color:#888;font-family:'Sarabun',sans-serif;}
-  `;
-  document.head.appendChild(style);
-  const div = document.createElement('div');
-  div.id = 'fb-loader';
-  div.innerHTML = '<div class="fb-spinner"></div><p>กำลังโหลดข้อมูล...</p>';
-  document.addEventListener('DOMContentLoaded', () => document.body.appendChild(div));
-})();
+
+
 
 // ============================================================
 //  BOOT — timeout 8 วิ ถ้า Firebase ช้าเกินก็ hide loader แล้วรันต่อ

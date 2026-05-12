@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สต็อกหน้าร้าน</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📦 สต็อกหน้าร้าน</h1>
+    <p id="today-date"></p>
+  </div>
+
+  <nav class="nav no-print">
+    <a href="index.html" class="active"><span>📦</span>สต็อก</a>
+    <a href="sell.html"><span>🛍</span>ขายสินค้า</a>
+    <a href="manage.html"><span>⚙️</span>จัดการ</a>
+    <a href="history.html"><span>📋</span>ประวัติ</a>
+  </nav>
+
+  <!-- สรุปภาพรวม -->
+  <div class="stat-row" id="stat-row">
+    <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-label">สินค้าทั้งหมด</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-low" style="color:#f9a825;">0</div><div class="stat-label">ใกล้หมด</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-out" style="color:#e53935;">0</div><div class="stat-label">หมดแล้ว</div></div>
+  </div>
+
+  <!-- filter หมวดหมู่ -->
+  <div class="cat-scroll no-print" id="cat-filter"></div>
+
+  <!-- ค้นหา -->
+  <div class="search-box no-print">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-inp" placeholder="ค้นหาสินค้า..." oninput="renderStock()"/>
+  </div>
+
+  <!-- รายการสต็อก -->
+  <div class="item-grid" id="stock-list"></div>
+
+  <!-- ปุ่ม -->
+  <div class="btn-row no-print" style="margin-top:12px;">
+    <button class="btn btn-green btn-full" onclick="window.location.href='sell.html'">🛍 ไปหน้าขายสินค้า</button>
+  </div>
+</div>
+
+<div id="modal" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script>
+let items = [], cats = [];
+let activeCat = 'all';
+
+function init() {
+  items = STOCK.getItems();
+  cats  = STOCK.getCats();
+  document.getElementById('today-date').textContent = todayStr();
+  renderCatFilter();
+  renderStock();
+  setupDelegation();
+}
+
+function renderCatFilter() {
+  const el = document.getElementById('cat-filter');
+  const all = `<button class="cat-chip ${activeCat==='all'?'active':''}" onclick="setCat('all')">ทั้งหมด</button>`;
+  const chips = cats.map(c =>
+    `<button class="cat-chip ${activeCat===c.id?'active':''}" onclick="setCat('${c.id}')">${c.name}</button>`
+  ).join('');
+  el.innerHTML = all + chips;
+}
+
+function setCat(id) {
+  activeCat = id;
+  renderCatFilter();
+  renderStock();
+}
+
+function getFiltered() {
+  const q = document.getElementById('search-inp').value.trim().toLowerCase();
+  return items.filter(it => {
+    const matchCat = activeCat === 'all' || it.catId === activeCat;
+    const matchQ   = !q || it.name.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+}
+
+function renderStock() {
+  items = STOCK.getItems();
+  const list = getFiltered();
+  const el = document.getElementById('stock-list');
+
+  // stats
+  document.getElementById('stat-total').textContent = items.length;
+  document.getElementById('stat-low').textContent   = items.filter(i => (i.stock||0) > 0 && (i.stock||0) <= (i.minStock||5)).length;
+  document.getElementById('stat-out').textContent   = items.filter(i => (i.stock||0) === 0).length;
+
+  if (!list.length) {
+    el.innerHTML = '<div class="empty">ไม่มีสินค้า</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(it => {
+    const s   = it.stock || 0;
+    const min = it.minStock || 5;
+    const cls = s === 0 ? 'out' : s <= min ? 'low' : '';
+    const numCls = s === 0 ? 'out' : s <= min ? 'low' : '';
+    const badge = s === 0
+      ? '<span class="badge badge-out">หมด</span>'
+      : s <= min ? '<span class="badge badge-warn">ใกล้หมด</span>' : '';
+    const catName = cats.find(c => c.id === it.catId)?.name || '';
+    return `<div class="stock-item ${cls}" data-id="${it.id}">
+      <div>
+        <div class="item-name">${it.name} ${badge}</div>
+        <div class="item-meta">${catName ? catName + ' · ' : ''}${it.unit}${it.sellPrice ? ' · ' + fmt(it.sellPrice) : ''}</div>
+      </div>
+      <div class="stock-ctrl">
+        <button class="s-btn minus" data-id="${it.id}" data-d="-1">−</button>
+        <div class="stock-num ${numCls}" data-id="${it.id}">${s}</div>
+        <button class="s-btn plus"  data-id="${it.id}" data-d="1">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setupDelegation() {
+  const el = document.getElementById('stock-list');
+  el.addEventListener('click', e => {
+    const btn = e.target.closest('.s-btn');
+    if (!btn) {
+      // tap on item row → edit modal
+      const row = e.target.closest('.stock-item');
+      if (row) showEditModal(row.dataset.id);
+      return;
+    }
+    const id = btn.dataset.id;
+    const d  = parseInt(btn.dataset.d);
+    STOCK.adjustStock(id, d);
+    items = STOCK.getItems();
+    // อัปเดตเฉพาะ row ที่เปลี่ยน
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    const s   = it.stock || 0;
+    const min = it.minStock || 5;
+    const numEl = el.querySelector(`.stock-num[data-id="${id}"]`);
+    const rowEl = el.querySelector(`.stock-item[data-id="${id}"]`);
+    if (numEl) {
+      numEl.textContent = s;
+      numEl.className = 'stock-num' + (s===0?' out':s<=min?' low':'');
+    }
+    if (rowEl) {
+      rowEl.className = 'stock-item' + (s===0?' out':s<=min?' low':'');
+      // อัปเดต badge
+      const nameEl = rowEl.querySelector('.item-name');
+      const baseName = it.name;
+      const badge = s===0 ? '<span class="badge badge-out">หมด</span>'
+        : s<=min ? '<span class="badge badge-warn">ใกล้หมด</span>' : '';
+      nameEl.innerHTML = baseName + ' ' + badge;
+    }
+    // อัปเดต stats
+    document.getElementById('stat-low').textContent = items.filter(i=>(i.stock||0)>0&&(i.stock||0)<=(i.minStock||5)).length;
+    document.getElementById('stat-out').textContent = items.filter(i=>(i.stock||0)===0).length;
+  });
+}
+
+function showEditModal(id) {
+  const it = items.find(x => x.id === id);
+  if (!it) return;
+  const catName = cats.find(c => c.id === it.catId)?.name || 'ไม่ระบุ';
+  openModal(`แก้ไขสต็อก — ${it.name}`,
+    `<div class="modal-row"><span>หมวด</span><span>${catName}</span></div>
+     <div class="modal-row"><span>หน่วย</span><span>${it.unit}</span></div>
+     <div class="modal-row"><span>ราคาขาย</span><span>${it.sellPrice ? fmt(it.sellPrice) : '—'}</span></div>
+     <div class="modal-row"><span>แจ้งเตือนเมื่อเหลือ</span><span>≤ ${it.minStock || 5} ${it.unit}</span></div>
+     <div style="margin-top:14px;">
+       <p style="font-size:13px;color:#888;margin-bottom:8px;">ตั้งจำนวนสต็อกใหม่โดยตรง:</p>
+       <div style="display:flex;gap:8px;align-items:center;">
+         <input class="inp" type="number" id="edit-stock-val" min="0" inputmode="numeric"
+           value="${it.stock||0}" style="flex:1;"/>
+         <button class="btn btn-green" style="flex:none;" onclick="saveEditStock('${id}')">บันทึก</button>
+       </div>
+     </div>`,
+    `<button class="btn btn-full" style="flex:1 1 100%" onclick="closeModal()">ปิด</button>`
+  );
+}
+
+function saveEditStock(id) {
+  const val = parseInt(document.getElementById('edit-stock-val').value) || 0;
+  STOCK.setStock(id, val);
+  items = STOCK.getItems();
+  closeModal();
+  renderStock();
+  toast('บันทึกสต็อกเรียบร้อย');
+}
+</script>
+</body>
+</html>

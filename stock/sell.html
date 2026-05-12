@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ขายสินค้า</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🛍 ขายสินค้า</h1>
+    <p id="today-date"></p>
+  </div>
+
+  <nav class="nav no-print">
+    <a href="index.html"><span>📦</span>สต็อก</a>
+    <a href="sell.html" class="active"><span>🛍</span>ขายสินค้า</a>
+    <a href="manage.html"><span>⚙️</span>จัดการ</a>
+    <a href="history.html"><span>📋</span>ประวัติ</a>
+  </nav>
+
+  <!-- filter หมวด -->
+  <div class="cat-scroll no-print" id="cat-filter"></div>
+
+  <!-- ค้นหา -->
+  <div class="search-box no-print">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-inp" placeholder="ค้นหาสินค้า..." oninput="renderSell()"/>
+  </div>
+
+  <!-- รายการสินค้า -->
+  <div id="sell-list"></div>
+
+  <!-- ยอดรวม -->
+  <div class="sell-total">
+    <span class="sell-total-label">ยอดรวม</span>
+    <span class="sell-total-amount" id="grand-total">฿0</span>
+  </div>
+
+  <!-- ปุ่ม -->
+  <div class="btn-row no-print">
+    <button class="btn btn-green" style="flex:2;" onclick="confirmSale()">✅ บันทึกการขาย</button>
+    <button class="btn" style="flex:1;" onclick="clearSell()">🗑 ล้าง</button>
+  </div>
+</div>
+
+<div id="modal" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script>
+let items = [], cats = [];
+let sellQty = {};
+let activeCat = 'all';
+
+function init() {
+  items = STOCK.getItems();
+  cats  = STOCK.getCats();
+  document.getElementById('today-date').textContent = todayStr();
+  renderCatFilter();
+  renderSell();
+  setupDelegation();
+}
+
+function renderCatFilter() {
+  const el = document.getElementById('cat-filter');
+  const all = `<button class="cat-chip ${activeCat==='all'?'active':''}" onclick="setCat('all')">ทั้งหมด</button>`;
+  const chips = cats.map(c =>
+    `<button class="cat-chip ${activeCat===c.id?'active':''}" onclick="setCat('${c.id}')">${c.name}</button>`
+  ).join('');
+  el.innerHTML = all + chips;
+}
+
+function setCat(id) { activeCat = id; renderCatFilter(); renderSell(); }
+
+function getFiltered() {
+  const q = document.getElementById('search-inp').value.trim().toLowerCase();
+  return items.filter(it => {
+    const matchCat = activeCat === 'all' || it.catId === activeCat;
+    const matchQ   = !q || it.name.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+}
+
+function renderSell() {
+  items = STOCK.getItems();
+  const list = getFiltered();
+  const el   = document.getElementById('sell-list');
+
+  if (!list.length) { el.innerHTML = '<div class="empty">ไม่มีสินค้า</div>'; updateTotal(); return; }
+
+  el.innerHTML = list.map(it => {
+    const q   = sellQty[it.id] || 0;
+    const pr  = it.sellPrice || 0;
+    const sub = q * pr;
+    const stockLeft = it.stock || 0;
+    return `<div class="sell-item" data-id="${it.id}">
+      <div>
+        <div class="item-name">${it.name}</div>
+        <div class="item-meta">${it.unit} · คงเหลือ <strong>${stockLeft}</strong> ${pr ? ' · ' + fmt(pr) : ''}</div>
+      </div>
+      <div class="sell-qty-ctrl">
+        <button class="s-btn minus sell-minus" data-id="${it.id}">−</button>
+        <input class="sell-qty-inp" type="number" min="0" inputmode="numeric"
+          value="${q}" data-id="${it.id}" data-max="${stockLeft}"/>
+        <button class="s-btn plus sell-plus"   data-id="${it.id}" data-max="${stockLeft}">+</button>
+      </div>
+      <div class="sell-sub${sub===0?' zero':''}" data-id="${it.id}">${sub>0?fmt(sub):'—'}</div>
+    </div>`;
+  }).join('');
+  updateTotal();
+}
+
+function setupDelegation() {
+  const el = document.getElementById('sell-list');
+
+  el.addEventListener('click', e => {
+    const btn = e.target.closest('.s-btn');
+    if (!btn) return;
+    const id  = btn.dataset.id;
+    const max = parseInt(btn.dataset.max) || 0;
+    const d   = btn.classList.contains('sell-plus') ? 1 : -1;
+    const cur = sellQty[id] || 0;
+    if (d > 0 && cur >= max) { toast('สต็อกไม่พอ', 'warn'); return; }
+    sellQty[id] = Math.max(0, cur + d);
+    updateRow(id);
+    updateTotal();
+  });
+
+  el.addEventListener('change', e => {
+    if (!e.target.classList.contains('sell-qty-inp')) return;
+    const id  = e.target.dataset.id;
+    const max = parseInt(e.target.dataset.max) || 0;
+    const val = Math.min(max, Math.max(0, parseInt(e.target.value) || 0));
+    sellQty[id] = val;
+    e.target.value = val;
+    updateRow(id);
+    updateTotal();
+  });
+}
+
+function updateRow(id) {
+  const it  = items.find(x => x.id === id);
+  const q   = sellQty[id] || 0;
+  const pr  = it?.sellPrice || 0;
+  const sub = q * pr;
+  const inp = document.querySelector(`.sell-qty-inp[data-id="${id}"]`);
+  if (inp && document.activeElement !== inp) inp.value = q;
+  const subEl = document.querySelector(`.sell-sub[data-id="${id}"]`);
+  if (subEl) { subEl.textContent = sub > 0 ? fmt(sub) : '—'; subEl.className = 'sell-sub' + (sub===0?' zero':''); }
+}
+
+function updateTotal() {
+  const t = items.reduce((s, it) => s + (sellQty[it.id]||0) * (it.sellPrice||0), 0);
+  document.getElementById('grand-total').textContent = fmt(t);
+}
+
+function getSoldItems() {
+  return items.filter(it => (sellQty[it.id]||0) > 0).map(it => ({
+    id: it.id, name: it.name, unit: it.unit, catId: it.catId,
+    qty: sellQty[it.id], price: it.sellPrice || 0,
+    subtotal: (sellQty[it.id]) * (it.sellPrice || 0)
+  }));
+}
+
+function confirmSale() {
+  const sold = getSoldItems();
+  if (!sold.length) { toast('กรุณาใส่จำนวนสินค้าก่อน', 'warn'); return; }
+  const total = sold.reduce((s, x) => s + x.subtotal, 0);
+
+  let body = sold.map(x =>
+    `<div class="modal-row"><span>${x.name} × ${x.qty} ${x.unit}</span><span style="font-weight:600">${x.subtotal?fmt(x.subtotal):'—'}</span></div>`
+  ).join('');
+  body += `<div class="modal-total-row">
+    <span style="font-size:14px;color:#666">ยอดรวม</span>
+    <span style="font-size:18px;font-weight:700;color:#1b5e20">${fmt(total)}</span>
+  </div>`;
+
+  openModal('ยืนยันการขาย', body,
+    `<button class="btn btn-green" style="flex:1" onclick="saveSale()">✅ ยืนยัน</button>
+     <button class="btn" style="flex:1" onclick="closeModal()">ยกเลิก</button>`);
+}
+
+function saveSale() {
+  const sold = getSoldItems();
+  const total = sold.reduce((s, x) => s + x.subtotal, 0);
+  // ตัดสต็อก
+  sold.forEach(x => STOCK.adjustStock(x.id, -x.qty));
+  // บันทึกการขาย
+  STOCK.addSale({ date: new Date().toISOString(), items: sold, total });
+  closeModal();
+  sellQty = {};
+  items = STOCK.getItems();
+  renderSell();
+  toast(`บันทึกการขายเรียบร้อย ${sold.length} รายการ`);
+}
+
+function clearSell() {
+  sellQty = {};
+  renderSell();
+  toast('ล้างรายการแล้ว');
+}
+</script>
+</body>
+</html>

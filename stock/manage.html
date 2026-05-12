@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการสินค้า</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>⚙️ จัดการ</h1>
+    <p>สินค้าและหมวดหมู่</p>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html"><span>📦</span>สต็อก</a>
+    <a href="sell.html"><span>🛍</span>ขายสินค้า</a>
+    <a href="manage.html" class="active"><span>⚙️</span>จัดการ</a>
+    <a href="history.html"><span>📋</span>ประวัติ</a>
+  </nav>
+
+  <!-- tabs -->
+  <div class="btn-row" style="margin-bottom:14px;">
+    <button class="btn btn-green" id="tab-item-btn" onclick="switchTab('item')" style="flex:1;">+ เพิ่มสินค้า</button>
+    <button class="btn" id="tab-list-btn" onclick="switchTab('list')" style="flex:1;">📋 รายการ</button>
+    <button class="btn" id="tab-cat-btn"  onclick="switchTab('cat')"  style="flex:1;">🏷 หมวดหมู่</button>
+  </div>
+
+  <!-- เพิ่มสินค้า -->
+  <div id="view-item">
+    <div class="card">
+      <p class="card-title">เพิ่มสินค้าใหม่</p>
+      <div class="input-group">
+        <input type="text" id="new-name" placeholder="ชื่อสินค้า"/>
+        <input type="text" id="new-unit" placeholder="หน่วย" style="flex:0.45;"/>
+      </div>
+      <div class="input-group">
+        <select id="new-cat"><option value="">-- หมวดหมู่ --</option></select>
+        <input type="number" id="new-price" placeholder="ราคาขาย (บาท)" min="0" inputmode="decimal" style="flex:1;"/>
+      </div>
+      <div class="input-group">
+        <input type="number" id="new-stock"    placeholder="สต็อกเริ่มต้น" min="0" inputmode="numeric"/>
+        <input type="number" id="new-minstock" placeholder="แจ้งเตือนเมื่อ ≤" min="0" inputmode="numeric" style="flex:0.7;"/>
+      </div>
+      <button class="btn btn-green btn-full" onclick="addItem()">+ เพิ่มสินค้า</button>
+    </div>
+  </div>
+
+  <!-- รายการสินค้า -->
+  <div id="view-list" style="display:none;">
+    <div id="item-list"></div>
+  </div>
+
+  <!-- หมวดหมู่ -->
+  <div id="view-cat" style="display:none;">
+    <div class="card">
+      <p class="card-title">เพิ่มหมวดหมู่</p>
+      <div class="input-group">
+        <input type="text" id="new-cat-name" placeholder="ชื่อหมวดหมู่"/>
+        <button class="btn btn-green" onclick="addCat()" style="flex:none;padding:0 16px;">เพิ่ม</button>
+      </div>
+    </div>
+    <div id="cat-list"></div>
+  </div>
+</div>
+
+<div id="modal" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script>
+let items = [], cats = [];
+
+function init() {
+  items = STOCK.getItems();
+  cats  = STOCK.getCats();
+  refreshCatSelect();
+}
+
+function switchTab(t) {
+  ['item','list','cat'].forEach(x => {
+    document.getElementById('view-'+x).style.display = x===t ? 'block' : 'none';
+  });
+  document.getElementById('tab-item-btn').className = 'btn' + (t==='item'?' btn-green':'');
+  document.getElementById('tab-list-btn').className = 'btn' + (t==='list'?' btn-green':'');
+  document.getElementById('tab-cat-btn').className  = 'btn' + (t==='cat' ?' btn-green':'');
+  if (t==='list') renderItemList();
+  if (t==='cat')  renderCatList();
+}
+
+function refreshCatSelect() {
+  const sel = document.getElementById('new-cat');
+  sel.innerHTML = '<option value="">-- หมวดหมู่ --</option>' +
+    cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+// ─── เพิ่มสินค้า ───
+function addItem() {
+  const name     = document.getElementById('new-name').value.trim();
+  const unit     = document.getElementById('new-unit').value.trim() || 'ชิ้น';
+  const catId    = document.getElementById('new-cat').value || '';
+  const price    = parseFloat(document.getElementById('new-price').value)    || 0;
+  const stock    = parseInt(document.getElementById('new-stock').value)       || 0;
+  const minStock = parseInt(document.getElementById('new-minstock').value)    || 5;
+  if (!name) { toast('กรุณาใส่ชื่อสินค้า', 'warn'); return; }
+  items.push({ id: String(Date.now()), name, unit, catId, sellPrice: price, stock, minStock });
+  STOCK.setItems(items);
+  ['new-name','new-unit','new-price','new-stock','new-minstock'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  toast(`เพิ่ม "${name}" เรียบร้อย`);
+}
+
+// ─── รายการสินค้า ───
+function renderItemList() {
+  items = STOCK.getItems();
+  const el = document.getElementById('item-list');
+  if (!items.length) { el.innerHTML = '<div class="empty">ยังไม่มีสินค้า</div>'; return; }
+
+  // จัดกลุ่มตามหมวด
+  const groups = {};
+  items.forEach(it => {
+    const k = it.catId || '__none';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(it);
+  });
+
+  let html = '';
+  cats.forEach(c => {
+    if (!groups[c.id]?.length) return;
+    html += `<div style="font-size:13px;font-weight:700;color:#2e7d32;padding:10px 0 6px;border-bottom:1px solid #c8e6c9;margin-bottom:8px;">${c.name}</div>`;
+    groups[c.id].forEach(it => { html += itemRow(it); });
+  });
+  if (groups['__none']?.length) {
+    html += `<div style="font-size:13px;font-weight:700;color:#888;padding:10px 0 6px;border-bottom:1px solid #eee;margin-bottom:8px;">ไม่ระบุหมวด</div>`;
+    groups['__none'].forEach(it => { html += itemRow(it); });
+  }
+  el.innerHTML = html || '<div class="empty">ยังไม่มีสินค้า</div>';
+}
+
+function itemRow(it) {
+  const catName = cats.find(c => c.id === it.catId)?.name || '';
+  return `<div class="manage-row">
+    <div class="manage-info">
+      <div class="manage-name">${it.name}</div>
+      <div class="manage-meta">${it.unit}${it.sellPrice?' · '+fmt(it.sellPrice):''} · สต็อก ${it.stock||0} · แจ้งเตือน ≤${it.minStock||5}</div>
+    </div>
+    <button class="btn" style="height:32px;padding:0 10px;font-size:12px;flex:none;margin-right:4px;"
+      onclick="editItemModal('${it.id}')">แก้ไข</button>
+    <button class="btn btn-red" style="height:32px;padding:0 10px;font-size:12px;flex:none;"
+      onclick="deleteItem('${it.id}')">ลบ</button>
+  </div>`;
+}
+
+function editItemModal(id) {
+  const it = items.find(x => x.id === id);
+  if (!it) return;
+  const catOpts = '<option value="">-- หมวดหมู่ --</option>' +
+    cats.map(c => `<option value="${c.id}"${c.id===it.catId?' selected':''}>${c.name}</option>`).join('');
+  openModal(`แก้ไข: ${it.name}`,
+    `<div class="input-group" style="flex-direction:column;gap:8px;">
+       <input class="inp" type="text" id="e-name" value="${it.name}" placeholder="ชื่อสินค้า"/>
+       <div style="display:flex;gap:8px;">
+         <input class="inp inp-half" type="text" id="e-unit" value="${it.unit}" placeholder="หน่วย"/>
+         <select class="inp" id="e-cat">${catOpts}</select>
+       </div>
+       <input class="inp" type="number" id="e-price" value="${it.sellPrice||''}" placeholder="ราคาขาย (บาท)" min="0"/>
+       <div style="display:flex;gap:8px;">
+         <input class="inp" type="number" id="e-stock"    value="${it.stock||0}" placeholder="สต็อก" min="0"/>
+         <input class="inp" type="number" id="e-minstock" value="${it.minStock||5}" placeholder="แจ้งเตือน ≤" min="0"/>
+       </div>
+     </div>`,
+    `<button class="btn btn-green" style="flex:1" onclick="saveEdit('${id}')">บันทึก</button>
+     <button class="btn" style="flex:1" onclick="closeModal()">ยกเลิก</button>`
+  );
+}
+
+function saveEdit(id) {
+  const name     = document.getElementById('e-name').value.trim();
+  const unit     = document.getElementById('e-unit').value.trim() || 'ชิ้น';
+  const catId    = document.getElementById('e-cat').value || '';
+  const price    = parseFloat(document.getElementById('e-price').value)    || 0;
+  const stock    = parseInt(document.getElementById('e-stock').value)       || 0;
+  const minStock = parseInt(document.getElementById('e-minstock').value)    || 5;
+  if (!name) { toast('กรุณาใส่ชื่อสินค้า', 'warn'); return; }
+  items = items.map(it => it.id === id ? { ...it, name, unit, catId, sellPrice: price, stock, minStock } : it);
+  STOCK.setItems(items);
+  closeModal();
+  renderItemList();
+  toast('บันทึกเรียบร้อย');
+}
+
+function deleteItem(id) {
+  const it = items.find(x => x.id === id);
+  if (!confirm(`ลบ "${it.name}" ออกจากรายการ?`)) return;
+  items = items.filter(x => x.id !== id);
+  STOCK.setItems(items);
+  renderItemList();
+  toast('ลบเรียบร้อย');
+}
+
+// ─── หมวดหมู่ ───
+function renderCatList() {
+  cats = STOCK.getCats();
+  const el = document.getElementById('cat-list');
+  if (!cats.length) { el.innerHTML = '<div class="empty">ยังไม่มีหมวดหมู่</div>'; return; }
+  el.innerHTML = cats.map(c => {
+    const cnt = items.filter(it => it.catId === c.id).length;
+    return `<div class="cat-row">
+      <div class="manage-info">
+        <div class="manage-name">🏷 ${c.name}</div>
+        <div class="manage-meta">${cnt} สินค้า</div>
+      </div>
+      <button class="btn btn-red" style="height:32px;padding:0 12px;font-size:13px;flex:none;"
+        onclick="deleteCat('${c.id}')">ลบ</button>
+    </div>`;
+  }).join('');
+}
+
+function addCat() {
+  const name = document.getElementById('new-cat-name').value.trim();
+  if (!name) { toast('กรุณาใส่ชื่อหมวดหมู่', 'warn'); return; }
+  if (cats.find(c => c.name === name)) { toast('มีหมวดนี้แล้ว', 'warn'); return; }
+  cats.push({ id: String(Date.now()), name });
+  STOCK.setCats(cats);
+  document.getElementById('new-cat-name').value = '';
+  refreshCatSelect();
+  renderCatList();
+  toast(`เพิ่มหมวด "${name}" เรียบร้อย`);
+}
+
+function deleteCat(id) {
+  const c = cats.find(x => x.id === id);
+  const cnt = items.filter(it => it.catId === id).length;
+  if (!confirm(`ลบหมวด "${c.name}"?\nสินค้า ${cnt} รายการจะถูกย้ายไป "ไม่ระบุหมวด"`)) return;
+  cats = cats.filter(x => x.id !== id);
+  items = items.map(it => it.catId === id ? { ...it, catId: '' } : it);
+  STOCK.setCats(cats);
+  STOCK.setItems(items);
+  refreshCatSelect();
+  renderCatList();
+  toast('ลบหมวดหมู่เรียบร้อย');
+}
+</script>
+</body>
+</html>

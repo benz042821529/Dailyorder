@@ -17,43 +17,52 @@ const FIREBASE_CONFIG = {
     const s2 = document.createElement('script');
     s2.src = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js';
     s2.onload = _firebaseReady;
+    s2.onerror = () => _firebaseResolve(false);
     document.head.appendChild(s2);
   };
+  s1.onerror = () => _firebaseResolve(false);
   document.head.appendChild(s1);
 })();
 
 let _db = null;
-let _dbResolve;
-const _dbReady = new Promise(r => _dbResolve = r);
+let _firebaseResolve;
+const _firebaseReady_p = new Promise(r => _firebaseResolve = r);
 
 function _firebaseReady() {
-  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-  _db = firebase.firestore();
-  // ไม่ใช้ persistence เพราะอาจทำให้ค้างบน mobile
-  // _db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-  _dbResolve();
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    _db = firebase.firestore();
+    _firebaseResolve(true);
+  } catch(e) {
+    _firebaseResolve(false);
+  }
 }
 
 // ============================================================
 //  STOCK DB — collection "stock" แยกจาก Dailyorder
 // ============================================================
 const STOCK = (() => {
-  let _cats     = null;
-  let _items    = null;
-  let _sales    = null;
+  let _cats  = null;
+  let _items = null;
+  let _sales = null;
 
   async function _get(key) {
-    await _dbReady;
-    const snap = await _db.collection('stock').doc(key).get();
-    return snap.exists ? snap.data().value : null;
+    if (!_db) return null;
+    try {
+      const snap = await _db.collection('stock').doc(key).get();
+      return snap.exists ? snap.data().value : null;
+    } catch(e) { return null; }
   }
+
   async function _set(key, value) {
-    await _dbReady;
-    return _db.collection('stock').doc(key).set({ value });
+    if (!_db) return;
+    try {
+      await _db.collection('stock').doc(key).set({ value });
+    } catch(e) { console.warn('_set error', key, e); }
   }
 
   async function prefetch() {
-    await _dbReady;
+    await _firebaseReady_p;
     const [c, i, s] = await Promise.all([
       _get('categories'), _get('items'), _get('sales')
     ]);
@@ -79,16 +88,15 @@ const STOCK = (() => {
       _set('sales', _sales);
     },
 
-    // ปรับ stock ตาม item id
     adjustStock: (id, delta) => {
-      _items = _items.map(it =>
+      _items = (_items || []).map(it =>
         it.id === id ? { ...it, stock: Math.max(0, (it.stock || 0) + delta) } : it
       );
       _set('items', _items);
     },
 
     setStock: (id, val) => {
-      _items = _items.map(it =>
+      _items = (_items || []).map(it =>
         it.id === id ? { ...it, stock: Math.max(0, val) } : it
       );
       _set('items', _items);
@@ -140,32 +148,29 @@ function openModal(title, bodyHtml, btnsHtml) {
 function closeModal() { document.getElementById('modal')?.classList.remove('open'); }
 function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
 
-
-
-
 // ============================================================
-//  BOOT — timeout 8 วิ ถ้า Firebase ช้าเกินก็ hide loader แล้วรันต่อ
+//  BOOT — รอ Firebase พร้อม แล้วซ่อน loader เรียก init ครั้งเดียว
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-  const hideLoader = () => {
+  let done = false;
+
+  const finish = () => {
+    if (done) return;
+    done = true;
     const el = document.getElementById('fb-loader');
     if (el) el.classList.add('hide');
-  };
-
-  const runInit = () => {
     if (typeof init === 'function') init();
   };
 
-  // timeout สำรอง 8 วิ
-  const timer = setTimeout(() => { hideLoader(); runInit(); }, 8000);
+  // timeout สำรอง 6 วิ
+  const timer = setTimeout(finish, 6000);
 
   try {
     await STOCK.ready();
-    clearTimeout(timer);
   } catch(e) {
-    clearTimeout(timer);
-  } finally {
-    hideLoader();
-    runInit();
+    console.warn('STOCK.ready error', e);
   }
+
+  clearTimeout(timer);
+  finish();
 });

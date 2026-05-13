@@ -3,79 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>สต็อกหน้าร้าน</title>
+<title>สต็อก — หลังบ้าน</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="fb-loader"><div class="fb-spinner"></div><p>กำลังโหลดข้อมูล...</p></div>
-<!-- PIN LOCK OVERLAY -->
+
+<!-- PIN -->
 <div id="pin-overlay" class="pin-overlay">
   <div class="pin-title">🔐 หลังบ้าน</div>
   <div class="pin-sub">ใส่รหัส 4 หลัก</div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="d0"></div>
-    <div class="pin-dot" id="d1"></div>
-    <div class="pin-dot" id="d2"></div>
-    <div class="pin-dot" id="d3"></div>
-  </div>
+  <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
   <div class="pin-err" id="pin-err"></div>
   <div class="pin-pad">
-    <button class="pin-key" onclick="pinKey('1')">1</button>
-    <button class="pin-key" onclick="pinKey('2')">2</button>
-    <button class="pin-key" onclick="pinKey('3')">3</button>
-    <button class="pin-key" onclick="pinKey('4')">4</button>
-    <button class="pin-key" onclick="pinKey('5')">5</button>
-    <button class="pin-key" onclick="pinKey('6')">6</button>
-    <button class="pin-key" onclick="pinKey('7')">7</button>
-    <button class="pin-key" onclick="pinKey('8')">8</button>
-    <button class="pin-key" onclick="pinKey('9')">9</button>
-    <button class="pin-key del" onclick="pinDel()">⌫</button>
-    <button class="pin-key zero" onclick="pinKey('0')">0</button>
-    <button class="pin-key del" onclick="pinClear()">✕</button>
+    <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key del" onclick="pinDel()">⌫</button><button class="pin-key zero" onclick="pinKey('0')">0</button><button class="pin-key del" onclick="pinClear()">✕</button>
   </div>
-  <button onclick="window.location.href='staff.html'"
-    style="background:transparent;border:none;color:#a5d6a7;font-size:13px;
-    font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:4px;">
-    ← กลับหน้าพนักงาน
-  </button>
+  <button onclick="window.location.href='staff.html'" style="background:transparent;border:none;color:#a5d6a7;font-size:13px;font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:4px;">← กลับหน้าพนักงาน</button>
 </div>
-
-<script>
-const ADMIN_PIN = '1234'; // ← เปลี่ยนรหัสที่นี่
-let pinVal = '';
-
-function pinKey(k) {
-  if (pinVal.length >= 4) return;
-  pinVal += k;
-  updateDots();
-  if (pinVal.length === 4) checkPin();
-}
-function pinDel() { pinVal = pinVal.slice(0,-1); updateDots(); document.getElementById('pin-err').textContent=''; }
-function pinClear() { pinVal = ''; updateDots(); document.getElementById('pin-err').textContent=''; }
-function updateDots() {
-  for(let i=0;i<4;i++) {
-    document.getElementById('d'+i).className = 'pin-dot' + (i < pinVal.length ? ' filled' : '');
-  }
-}
-function checkPin() {
-  if (pinVal === ADMIN_PIN) {
-    sessionStorage.setItem('stock_admin','1');
-    document.getElementById('pin-overlay').classList.add('hide');
-  } else {
-    document.getElementById('pin-err').textContent = 'รหัสไม่ถูกต้อง';
-    pinVal = '';
-    updateDots();
-  }
-}
-// ตรวจสอบ session
-if (sessionStorage.getItem('stock_admin') === '1') {
-  document.getElementById('pin-overlay').classList.add('hide');
-}
-</script>
 
 <div class="container">
   <div class="header">
-    <h1>📦 สต็อกหน้าร้าน</h1>
+    <h1>📦 สต็อก — หลังบ้าน</h1>
     <p id="today-date"></p>
   </div>
 
@@ -83,22 +34,22 @@ if (sessionStorage.getItem('stock_admin') === '1') {
     <a href="index.html" class="active"><span>📦</span>สต็อก</a>
     <a href="manage.html"><span>⚙️</span>จัดการ</a>
     <a href="history.html"><span>📋</span>ประวัติ</a>
-  <a href="staff.html" onclick="sessionStorage.removeItem('stock_admin')"><span>👤</span>พนักงาน</a>
+    <a href="staff.html" onclick="sessionStorage.removeItem('stock_admin')"><span>👤</span>พนักงาน</a>
   </nav>
 
-  <!-- สรุปภาพรวม -->
+  <!-- ยอดขายวันนี้ (real-time) -->
+  <div class="today-box no-print">
+    <span>🛍 ขายวันนี้ <strong id="today-qty">0</strong> ชิ้น</span>
+    <strong id="today-total">฿0</strong>
+  </div>
+
+  <!-- สรุปสต็อก -->
   <div class="stat-row" id="stat-row">
     <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-label">สินค้าทั้งหมด</div></div>
     <div class="stat-box"><div class="stat-num" id="stat-low" style="color:#f9a825;">0</div><div class="stat-label">ใกล้หมด</div></div>
     <div class="stat-box"><div class="stat-num" id="stat-out" style="color:#e53935;">0</div><div class="stat-label">หมดแล้ว</div></div>
   </div>
 
-
-  <!-- ยอดขายวันนี้ -->
-  <div class="today-box no-print">
-    <span>🛍 ขายวันนี้ <strong id="today-qty">0</strong> ชิ้น</span>
-    <strong id="today-total">฿0</strong>
-  </div>
   <!-- filter หมวดหมู่ -->
   <div class="cat-scroll no-print" id="cat-filter"></div>
 
@@ -113,21 +64,28 @@ if (sessionStorage.getItem('stock_admin') === '1') {
 
   <!-- ปุ่ม -->
   <div class="btn-row no-print" style="margin-top:12px;">
-    <button class="btn btn-green" style="flex:1;" onclick="resetDailyConfirm()">🔄 รีเซ็ตสต็อกประจำวัน</button>
+    <button class="btn btn-green btn-full" onclick="resetDailyConfirm()">🔄 รีเซ็ตสต็อกประจำวัน</button>
   </div>
 </div>
 
 <div id="modal" class="modal-overlay" onclick="closeModalOutside(event)">
-  <div class="modal-box">
-    <div class="modal-title" id="modal-title"></div>
-    <div id="modal-body"></div>
-    <div class="modal-btns" id="modal-btns"></div>
-  </div>
+  <div class="modal-box"><div class="modal-title" id="modal-title"></div><div id="modal-body"></div><div class="modal-btns" id="modal-btns"></div></div>
 </div>
 <div id="toast" class="toast"></div>
 
 <script src="data.js"></script>
 <script>
+// ── PIN ──
+const ADMIN_PIN = '1234';
+let pinVal = '';
+function pinKey(k){if(pinVal.length>=4)return;pinVal+=k;updateDots();if(pinVal.length===4)checkPin();}
+function pinDel(){pinVal=pinVal.slice(0,-1);updateDots();document.getElementById('pin-err').textContent='';}
+function pinClear(){pinVal='';updateDots();document.getElementById('pin-err').textContent='';}
+function updateDots(){for(let i=0;i<4;i++)document.getElementById('d'+i).className='pin-dot'+(i<pinVal.length?' filled':'');}
+function checkPin(){if(pinVal===ADMIN_PIN){sessionStorage.setItem('stock_admin','1');document.getElementById('pin-overlay').classList.add('hide');}else{document.getElementById('pin-err').textContent='รหัสไม่ถูกต้อง';pinVal='';updateDots();}}
+if(sessionStorage.getItem('stock_admin')==='1')document.getElementById('pin-overlay').classList.add('hide');
+
+// ── MAIN ──
 let items = [], cats = [];
 let activeCat = 'all';
 
@@ -139,28 +97,42 @@ function init() {
   renderStock();
   renderTodayBox();
   setupDelegation();
-  // ฟัง real-time เมื่อพนักงานตัดสต็อก
-  STOCK.onTodayChange(() => {
-    renderTodayBox();
-    renderStock(); // อัปเดตตัวเลขสต็อกด้วย
+
+  // real-time: เมื่อพนักงานตัดสต็อก → อัปเดตยอดวันนี้และสต็อกทันที
+  STOCK.onTodayChange(today => {
+    renderTodayBoxFromData(today);
+  });
+  STOCK.onItemsChange(newItems => {
+    items = newItems;
+    renderStock();
   });
 }
 
+// ── ยอดขายวันนี้ ──
+function renderTodayBox() {
+  renderTodayBoxFromData(STOCK.getToday());
+}
+
+function renderTodayBoxFromData(today) {
+  const entries = Object.values(today.items || {}).filter(x => x.qty > 0);
+  const qty   = entries.reduce((s,x) => s + x.qty, 0);
+  const total = entries.reduce((s,x) => s + x.qty*(x.price||0), 0);
+  document.getElementById('today-qty').textContent   = qty;
+  document.getElementById('today-total').textContent = fmt(total);
+}
+
+// ── หมวดหมู่ ──
 function renderCatFilter() {
-  const el = document.getElementById('cat-filter');
+  const el  = document.getElementById('cat-filter');
   const all = `<button class="cat-chip ${activeCat==='all'?'active':''}" onclick="setCat('all')">ทั้งหมด</button>`;
   const chips = cats.map(c =>
     `<button class="cat-chip ${activeCat===c.id?'active':''}" onclick="setCat('${c.id}')">${c.name}</button>`
   ).join('');
   el.innerHTML = all + chips;
 }
+function setCat(id) { activeCat = id; renderCatFilter(); renderStock(); }
 
-function setCat(id) {
-  activeCat = id;
-  renderCatFilter();
-  renderStock();
-}
-
+// ── รายการสต็อก ──
 function getFiltered() {
   const q = document.getElementById('search-inp').value.trim().toLowerCase();
   return items.filter(it => {
@@ -171,38 +143,31 @@ function getFiltered() {
 }
 
 function renderStock() {
-  items = STOCK.getItems();
   const list = getFiltered();
-  const el = document.getElementById('stock-list');
+  const el   = document.getElementById('stock-list');
 
-  // stats
   document.getElementById('stat-total').textContent = items.length;
-  document.getElementById('stat-low').textContent   = items.filter(i => (i.stock||0) > 0 && (i.stock||0) <= (i.minStock||5)).length;
-  document.getElementById('stat-out').textContent   = items.filter(i => (i.stock||0) === 0).length;
+  document.getElementById('stat-low').textContent   = items.filter(i=>(i.stock||0)>0&&(i.stock||0)<=(i.minStock||5)).length;
+  document.getElementById('stat-out').textContent   = items.filter(i=>(i.stock||0)===0).length;
 
-  if (!list.length) {
-    el.innerHTML = '<div class="empty">ไม่มีสินค้า</div>';
-    return;
-  }
+  if (!list.length) { el.innerHTML='<div class="empty">ไม่มีสินค้า</div>'; return; }
 
   el.innerHTML = list.map(it => {
     const s   = it.stock || 0;
     const min = it.minStock || 5;
-    const cls = s === 0 ? 'out' : s <= min ? 'low' : '';
-    const numCls = s === 0 ? 'out' : s <= min ? 'low' : '';
-    const badge = s === 0
-      ? '<span class="badge badge-out">หมด</span>'
-      : s <= min ? '<span class="badge badge-warn">ใกล้หมด</span>' : '';
-    const catName = cats.find(c => c.id === it.catId)?.name || '';
+    const cls = s===0?'out':s<=min?'low':'';
+    const badge = s===0?'<span class="badge badge-out">หมด</span>':s<=min?'<span class="badge badge-warn">ใกล้หมด</span>':'';
+    const catName = cats.find(c=>c.id===it.catId)?.name||'';
+    const daily = it.dailyStock!==null&&it.dailyStock!==undefined ? ` · รีเซ็ต/วัน ${it.dailyStock}` : '';
     return `<div class="stock-item ${cls}" data-id="${it.id}">
       <div>
         <div class="item-name">${it.name} ${badge}</div>
-        <div class="item-meta">${catName ? catName + ' · ' : ''}${it.unit}${it.sellPrice ? ' · ' + fmt(it.sellPrice) : ''}</div>
+        <div class="item-meta">${catName?catName+' · ':''}${it.unit}${it.sellPrice?' · '+fmt(it.sellPrice):''}${daily}</div>
       </div>
       <div class="stock-ctrl">
-        <button class="s-btn minus" data-id="${it.id}" data-d="-1">−</button>
-        <div class="stock-num ${numCls}" data-id="${it.id}">${s}</div>
-        <button class="s-btn plus"  data-id="${it.id}" data-d="1">+</button>
+        <button class="s-btn minus" data-id="${it.id}">−</button>
+        <div class="stock-num ${cls}" data-id="${it.id}">${s}</div>
+        <button class="s-btn plus"  data-id="${it.id}">+</button>
       </div>
     </div>`;
   }).join('');
@@ -213,69 +178,83 @@ function setupDelegation() {
   el.addEventListener('click', e => {
     const btn = e.target.closest('.s-btn');
     if (!btn) {
-      // tap on item row → edit modal
       const row = e.target.closest('.stock-item');
       if (row) showEditModal(row.dataset.id);
       return;
     }
     const id = btn.dataset.id;
-    const d  = parseInt(btn.dataset.d);
+    const d  = btn.classList.contains('minus') ? -1 : 1;
     STOCK.adjustStock(id, d);
     items = STOCK.getItems();
-    // อัปเดตเฉพาะ row ที่เปลี่ยน
-    const it = items.find(x => x.id === id);
+    const it  = items.find(x=>x.id===id);
     if (!it) return;
-    const s   = it.stock || 0;
-    const min = it.minStock || 5;
+    const s   = it.stock||0;
+    const min = it.minStock||5;
+    const cls = s===0?'out':s<=min?'low':'';
     const numEl = el.querySelector(`.stock-num[data-id="${id}"]`);
     const rowEl = el.querySelector(`.stock-item[data-id="${id}"]`);
-    if (numEl) {
-      numEl.textContent = s;
-      numEl.className = 'stock-num' + (s===0?' out':s<=min?' low':'');
-    }
+    if (numEl) { numEl.textContent=s; numEl.className='stock-num'+(cls?' '+cls:''); }
     if (rowEl) {
-      rowEl.className = 'stock-item' + (s===0?' out':s<=min?' low':'');
-      // อัปเดต badge
-      const nameEl = rowEl.querySelector('.item-name');
-      const baseName = it.name;
-      const badge = s===0 ? '<span class="badge badge-out">หมด</span>'
-        : s<=min ? '<span class="badge badge-warn">ใกล้หมด</span>' : '';
-      nameEl.innerHTML = baseName + ' ' + badge;
+      rowEl.className='stock-item'+(cls?' '+cls:'');
+      const nameEl=rowEl.querySelector('.item-name');
+      const badge=s===0?'<span class="badge badge-out">หมด</span>':s<=min?'<span class="badge badge-warn">ใกล้หมด</span>':'';
+      nameEl.innerHTML=it.name+' '+badge;
     }
-    // อัปเดต stats
-    document.getElementById('stat-low').textContent = items.filter(i=>(i.stock||0)>0&&(i.stock||0)<=(i.minStock||5)).length;
-    document.getElementById('stat-out').textContent = items.filter(i=>(i.stock||0)===0).length;
+    document.getElementById('stat-low').textContent=items.filter(i=>(i.stock||0)>0&&(i.stock||0)<=(i.minStock||5)).length;
+    document.getElementById('stat-out').textContent=items.filter(i=>(i.stock||0)===0).length;
   });
 }
 
+// ── แก้ไขสต็อกโดยตรง ──
 function showEditModal(id) {
-  const it = items.find(x => x.id === id);
+  const it = items.find(x=>x.id===id);
   if (!it) return;
-  const catName = cats.find(c => c.id === it.catId)?.name || 'ไม่ระบุ';
+  const catName = cats.find(c=>c.id===it.catId)?.name||'ไม่ระบุ';
   openModal(`แก้ไขสต็อก — ${it.name}`,
     `<div class="modal-row"><span>หมวด</span><span>${catName}</span></div>
      <div class="modal-row"><span>หน่วย</span><span>${it.unit}</span></div>
-     <div class="modal-row"><span>ราคาขาย</span><span>${it.sellPrice ? fmt(it.sellPrice) : '—'}</span></div>
-     <div class="modal-row"><span>แจ้งเตือนเมื่อเหลือ</span><span>≤ ${it.minStock || 5} ${it.unit}</span></div>
+     <div class="modal-row"><span>ราคาขาย</span><span>${it.sellPrice?fmt(it.sellPrice):'—'}</span></div>
+     <div class="modal-row"><span>รีเซ็ต/วัน</span><span>${it.dailyStock!==null&&it.dailyStock!==undefined?it.dailyStock:'ไม่ได้ตั้ง'}</span></div>
      <div style="margin-top:14px;">
-       <p style="font-size:13px;color:#888;margin-bottom:8px;">ตั้งจำนวนสต็อกใหม่โดยตรง:</p>
+       <p style="font-size:13px;color:#888;margin-bottom:8px;">ตั้งจำนวนสต็อกตอนนี้:</p>
        <div style="display:flex;gap:8px;align-items:center;">
-         <input class="inp" type="number" id="edit-stock-val" min="0" inputmode="numeric"
-           value="${it.stock||0}" style="flex:1;"/>
+         <input class="inp" type="number" id="edit-stock-val" min="0" inputmode="numeric" value="${it.stock||0}" style="flex:1;"/>
          <button class="btn btn-green" style="flex:none;" onclick="saveEditStock('${id}')">บันทึก</button>
        </div>
      </div>`,
     `<button class="btn btn-full" style="flex:1 1 100%" onclick="closeModal()">ปิด</button>`
   );
 }
-
 function saveEditStock(id) {
-  const val = parseInt(document.getElementById('edit-stock-val').value) || 0;
+  const val = parseInt(document.getElementById('edit-stock-val').value)||0;
   STOCK.setStock(id, val);
   items = STOCK.getItems();
-  closeModal();
-  renderStock();
+  closeModal(); renderStock();
   toast('บันทึกสต็อกเรียบร้อย');
+}
+
+// ── รีเซ็ตสต็อกประจำวัน ──
+function resetDailyConfirm() {
+  const hasDaily = items.some(it => it.dailyStock!==null && it.dailyStock!==undefined);
+  if (!hasDaily) {
+    toast('ยังไม่ได้ตั้งค่าสต็อก/วัน ไปตั้งที่หน้าจัดการก่อน','warn');
+    return;
+  }
+  const preview = items.filter(it=>it.dailyStock!==null&&it.dailyStock!==undefined)
+    .map(it=>`<div class="modal-row"><span>${it.name}</span><span style="font-weight:700;color:#1b5e20;">${it.dailyStock} ${it.unit}</span></div>`)
+    .join('');
+  openModal('🔄 รีเซ็ตสต็อกประจำวัน',
+    `<p style="font-size:13px;color:#888;margin-bottom:10px;">สต็อกจะถูกตั้งใหม่เป็น:</p>${preview}
+     <p style="font-size:12px;color:#aaa;margin-top:10px;">รายการที่ไม่ได้ตั้งค่า/วัน จะคงสต็อกเดิมไว้</p>`,
+    `<button class="btn btn-green" style="flex:1" onclick="doResetDaily()">✅ รีเซ็ตเลย</button>
+     <button class="btn" style="flex:1" onclick="closeModal()">ยกเลิก</button>`
+  );
+}
+function doResetDaily() {
+  STOCK.resetDaily();
+  items = STOCK.getItems();
+  closeModal(); renderStock();
+  toast('รีเซ็ตสต็อกเรียบร้อย');
 }
 </script>
 </body>

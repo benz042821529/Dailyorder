@@ -94,26 +94,37 @@ const STOCK = (() => {
     _checkDayRollover();
   }
 
-  // callback สำหรับ real-time today update
+  // callbacks สำหรับ real-time
   let _onTodayChange = null;
+  let _onItemsChange = null;
 
-  function _listenToday() {
+  function _listenRealtime() {
     if (!_db) return;
+    // ฟัง today
     _db.collection('stock').doc('today').onSnapshot(snap => {
       if (!snap.exists) return;
-      const newToday = snap.data().value;
-      if (!newToday) return;
+      const val = snap.data().value;
+      if (!val) return;
       const todayKey = new Date().toISOString().slice(0,10);
-      if (newToday.date === todayKey) {
-        _today = newToday;
+      if (val.date === todayKey) {
+        _today = val;
         if (typeof _onTodayChange === 'function') _onTodayChange(_today);
       }
+    });
+    // ฟัง items (สต็อกเปลี่ยนจากพนักงาน)
+    _db.collection('stock').doc('items').onSnapshot(snap => {
+      if (!snap.exists) return;
+      const val = snap.data().value;
+      if (!val) return;
+      _items = val;
+      if (typeof _onItemsChange === 'function') _onItemsChange(_items);
     });
   }
 
   return {
-    ready:      () => prefetch().then(() => _listenToday()),
+    ready:         () => prefetch().then(() => _listenRealtime()),
     onTodayChange: (fn) => { _onTodayChange = fn; },
+    onItemsChange: (fn) => { _onItemsChange = fn; },
     getCats:    () => _cats  || [],
     getItems:   () => _items || [],
     getSales:   () => _sales || [],

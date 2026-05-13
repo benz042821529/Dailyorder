@@ -73,6 +73,12 @@ const STOCK = (() => {
       }
       _today = { date: todayKey, items: {} };
       _set('today', _today);
+      // รีเซ็ตสต็อกกลับเป็น dailyStock
+      _items = (_items||[]).map(it => ({
+        ...it,
+        stock: (it.dailyStock !== undefined && it.dailyStock !== null) ? it.dailyStock : (it.stock||0)
+      }));
+      _set('items', _items);
     }
   }
 
@@ -133,7 +139,22 @@ const STOCK = (() => {
       _set('items', _items);
     },
 
-    // archive ด้วยมือ (ปุ่มปิดวัน)
+    // ตั้งค่าสต็อกเริ่มต้นต่อวัน
+    setDailyStock: (id, val) => {
+      _items = (_items||[]).map(it => it.id===id ? {...it, dailyStock: Math.max(0,val)} : it);
+      _set('items', _items);
+    },
+
+    // รีเซ็ตสต็อกทุกตัวกลับเป็น dailyStock (เรียกตอนปิดวัน/ขึ้นวันใหม่)
+    resetDaily: () => {
+      _items = (_items||[]).map(it => ({
+        ...it,
+        stock: (it.dailyStock !== undefined && it.dailyStock !== null) ? it.dailyStock : (it.stock||0)
+      }));
+      _set('items', _items);
+    },
+
+    // archive ด้วยมือ (ปุ่มปิดวัน) + รีเซ็ตสต็อก
     closeDay: () => {
       _checkDayRollover();
       const entries = Object.values(_today.items).filter(x => x.qty > 0);
@@ -145,6 +166,12 @@ const STOCK = (() => {
       _set('sales', _sales);
       _today = { date: new Date().toISOString().slice(0,10), items: {} };
       _set('today', _today);
+      // รีเซ็ตสต็อกกลับเป็น dailyStock
+      _items = (_items||[]).map(it => ({
+        ...it,
+        stock: (it.dailyStock !== undefined && it.dailyStock !== null) ? it.dailyStock : (it.stock||0)
+      }));
+      _set('items', _items);
       return true;
     },
   };

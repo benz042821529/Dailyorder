@@ -106,8 +106,11 @@ if (sessionStorage.getItem('stock_admin') === '1') {
         <input type="number" id="new-price" placeholder="ราคาขาย (บาท)" min="0" inputmode="decimal" style="flex:1;"/>
       </div>
       <div class="input-group">
-        <input type="number" id="new-stock"    placeholder="สต็อกเริ่มต้น" min="0" inputmode="numeric"/>
-        <input type="number" id="new-minstock" placeholder="แจ้งเตือนเมื่อ ≤" min="0" inputmode="numeric" style="flex:0.7;"/>
+        <input type="number" id="new-stock"       placeholder="สต็อกวันแรก" min="0" inputmode="numeric"/>
+        <input type="number" id="new-minstock"    placeholder="แจ้งเตือนเมื่อ ≤" min="0" inputmode="numeric" style="flex:0.7;"/>
+      </div>
+      <div class="input-group">
+        <input type="number" id="new-dailystock"  placeholder="สต็อกเริ่มต้น/วัน (รีเซ็ตทุกวัน)" min="0" inputmode="numeric"/>
       </div>
       <button class="btn btn-green btn-full" onclick="addItem()">+ เพิ่มสินค้า</button>
     </div>
@@ -173,12 +176,14 @@ function addItem() {
   const unit     = document.getElementById('new-unit').value.trim() || 'ชิ้น';
   const catId    = document.getElementById('new-cat').value || '';
   const price    = parseFloat(document.getElementById('new-price').value)    || 0;
-  const stock    = parseInt(document.getElementById('new-stock').value)       || 0;
-  const minStock = parseInt(document.getElementById('new-minstock').value)    || 5;
+  const stock      = parseInt(document.getElementById('new-stock').value)       || 0;
+  const minStock   = parseInt(document.getElementById('new-minstock').value)    || 5;
+  const dailyStock = document.getElementById('new-dailystock').value !== ''
+    ? parseInt(document.getElementById('new-dailystock').value) : null;
   if (!name) { toast('กรุณาใส่ชื่อสินค้า', 'warn'); return; }
-  items.push({ id: String(Date.now()), name, unit, catId, sellPrice: price, stock, minStock });
+  items.push({ id: String(Date.now()), name, unit, catId, sellPrice: price, stock, minStock, dailyStock });
   STOCK.setItems(items);
-  ['new-name','new-unit','new-price','new-stock','new-minstock'].forEach(id => {
+  ['new-name','new-unit','new-price','new-stock','new-minstock','new-dailystock'].forEach(id => {
     document.getElementById(id).value = '';
   });
   toast(`เพิ่ม "${name}" เรียบร้อย`);
@@ -216,7 +221,7 @@ function itemRow(it) {
   return `<div class="manage-row">
     <div class="manage-info">
       <div class="manage-name">${it.name}</div>
-      <div class="manage-meta">${it.unit}${it.sellPrice?' · '+fmt(it.sellPrice):''} · สต็อก ${it.stock||0} · แจ้งเตือน ≤${it.minStock||5}</div>
+      <div class="manage-meta">${it.unit}${it.sellPrice?' · '+fmt(it.sellPrice):''} · สต็อก ${it.stock||0} · รีเซ็ต/วัน ${it.dailyStock!==null&&it.dailyStock!==undefined?it.dailyStock:'—'}</div>
     </div>
     <button class="btn" style="height:32px;padding:0 10px;font-size:12px;flex:none;margin-right:4px;"
       onclick="editItemModal('${it.id}')">แก้ไข</button>
@@ -239,9 +244,12 @@ function editItemModal(id) {
        </div>
        <input class="inp" type="number" id="e-price" value="${it.sellPrice||''}" placeholder="ราคาขาย (บาท)" min="0"/>
        <div style="display:flex;gap:8px;">
-         <input class="inp" type="number" id="e-stock"    value="${it.stock||0}" placeholder="สต็อก" min="0"/>
-         <input class="inp" type="number" id="e-minstock" value="${it.minStock||5}" placeholder="แจ้งเตือน ≤" min="0"/>
+         <input class="inp" type="number" id="e-stock"      value="${it.stock||0}" placeholder="สต็อกปัจจุบัน" min="0"/>
+         <input class="inp" type="number" id="e-minstock"   value="${it.minStock||5}" placeholder="แจ้งเตือน ≤" min="0"/>
        </div>
+       <input class="inp" type="number" id="e-dailystock"
+         value="${it.dailyStock!==null&&it.dailyStock!==undefined?it.dailyStock:''}"
+         placeholder="สต็อกเริ่มต้น/วัน (เว้นว่างถ้าไม่รีเซ็ต)" min="0"/>
      </div>`,
     `<button class="btn btn-green" style="flex:1" onclick="saveEdit('${id}')">บันทึก</button>
      <button class="btn" style="flex:1" onclick="closeModal()">ยกเลิก</button>`
@@ -253,10 +261,12 @@ function saveEdit(id) {
   const unit     = document.getElementById('e-unit').value.trim() || 'ชิ้น';
   const catId    = document.getElementById('e-cat').value || '';
   const price    = parseFloat(document.getElementById('e-price').value)    || 0;
-  const stock    = parseInt(document.getElementById('e-stock').value)       || 0;
-  const minStock = parseInt(document.getElementById('e-minstock').value)    || 5;
+  const stock      = parseInt(document.getElementById('e-stock').value)       || 0;
+  const minStock   = parseInt(document.getElementById('e-minstock').value)    || 5;
+  const dsVal      = document.getElementById('e-dailystock').value;
+  const dailyStock = dsVal !== '' ? parseInt(dsVal) : null;
   if (!name) { toast('กรุณาใส่ชื่อสินค้า', 'warn'); return; }
-  items = items.map(it => it.id === id ? { ...it, name, unit, catId, sellPrice: price, stock, minStock } : it);
+  items = items.map(it => it.id === id ? { ...it, name, unit, catId, sellPrice: price, stock, minStock, dailyStock } : it);
   STOCK.setItems(items);
   closeModal();
   renderItemList();

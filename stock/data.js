@@ -162,7 +162,26 @@ const STOCK = (() => {
       }
     },
 
-    // เซ็ตสต็อกโดยตรง (หลังบ้าน)
+    // adjustStock: กด − นับยอดขาย, กด + คืนยอด (ใช้ทั้งหน้าพนักงานและหลังบ้าน)
+    adjustStock: (id, delta) => {
+      _checkDayRollover();
+      const it = (_items||[]).find(x => x.id === id);
+      if (!it) return false;
+      if (delta < 0 && (it.stock||0) <= 0) return false;
+      _items = _items.map(x => x.id===id ? {...x, stock: Math.max(0,(x.stock||0)+delta)} : x);
+      _set('items', _items);
+      if (delta < 0) {
+        if (!_today.items[id]) _today.items[id] = { id, name: it.name, unit: it.unit, price: it.sellPrice||0, qty: 0 };
+        _today.items[id].qty += 1;
+        _set('today', _today);
+      } else if (delta > 0 && _today.items[id] && _today.items[id].qty > 0) {
+        _today.items[id].qty -= 1;
+        _set('today', _today);
+      }
+      return true;
+    },
+
+    // เซ็ตสต็อกโดยตรง (ไม่นับยอดขาย — ใช้สำหรับเติมของ/แก้ตัวเลข)
     setStock: (id, val) => {
       _items = (_items||[]).map(it => it.id===id ? {...it, stock: Math.max(0,val)} : it);
       _set('items', _items);

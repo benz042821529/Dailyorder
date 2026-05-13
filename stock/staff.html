@@ -56,13 +56,6 @@
       <div id="stat-low-badge"></div>
     </div>
   </div>
-
-  <!-- ยอดขายวันนี้ -->
-  <div class="today-box">
-    <span>🛍 ขายวันนี้ <strong id="today-qty">0</strong> ชิ้น</span>
-    <strong id="today-total">฿0</strong>
-  </div>
-
   <!-- ค้นหา -->
   <div class="search-box">
     <span class="search-icon">🔍</span>
@@ -90,15 +83,12 @@ let items = [], cats = [], todayData = {};
 function init() {
   items     = STOCK.getItems();
   cats      = STOCK.getCats();
-  todayData = STOCK.getToday();
   document.getElementById('today-date').textContent = todayStr();
   renderStaff();
-  renderTodaySummary();
   setupDelegation();
 }
 
 function renderTodaySummary() {
-  todayData = STOCK.getToday();
   const entries = Object.values(todayData.items || {});
   const qty   = entries.reduce((s,x) => s+x.qty, 0);
   const total = entries.reduce((s,x) => s+x.qty*(x.price||0), 0);
@@ -108,7 +98,6 @@ function renderTodaySummary() {
 
 function renderStaff() {
   items     = STOCK.getItems();
-  todayData = STOCK.getToday();
   const el  = document.getElementById('staff-list');
   const q   = document.getElementById('search-inp').value.trim().toLowerCase();
 

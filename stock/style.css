@@ -213,3 +213,9 @@ border-radius:50%;animation:fb-spin 0.7s linear infinite;}
 
 /* NAV 4 cols */
 .nav-4 { grid-template-columns: repeat(4,1fr) !important; }
+
+/* TODAY BOX */
+.today-box { background:#e8f5e9;border:1.5px solid #c8e6c9;border-radius:12px;
+  padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center; }
+.today-box span { font-size:13px;color:#388e3c; }
+.today-box strong { font-size:16px;font-weight:700;color:#1b5e20; }

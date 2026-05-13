@@ -93,6 +93,12 @@ if (sessionStorage.getItem('stock_admin') === '1') {
     <div class="stat-box"><div class="stat-num" id="stat-out" style="color:#e53935;">0</div><div class="stat-label">หมดแล้ว</div></div>
   </div>
 
+
+  <!-- ยอดขายวันนี้ -->
+  <div class="today-box no-print">
+    <span>🛍 ขายวันนี้ <strong id="today-qty">0</strong> ชิ้น</span>
+    <strong id="today-total">฿0</strong>
+  </div>
   <!-- filter หมวดหมู่ -->
   <div class="cat-scroll no-print" id="cat-filter"></div>
 
@@ -131,6 +137,7 @@ function init() {
   document.getElementById('today-date').textContent = todayStr();
   renderCatFilter();
   renderStock();
+  renderTodayBox();
   setupDelegation();
 }
 

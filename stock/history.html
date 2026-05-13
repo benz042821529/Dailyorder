@@ -8,100 +8,54 @@
 </head>
 <body>
 <div id="fb-loader"><div class="fb-spinner"></div><p>กำลังโหลดข้อมูล...</p></div>
-<!-- PIN LOCK OVERLAY -->
+
+<!-- PIN -->
 <div id="pin-overlay" class="pin-overlay">
   <div class="pin-title">🔐 หลังบ้าน</div>
   <div class="pin-sub">ใส่รหัส 4 หลัก</div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="d0"></div>
-    <div class="pin-dot" id="d1"></div>
-    <div class="pin-dot" id="d2"></div>
-    <div class="pin-dot" id="d3"></div>
-  </div>
+  <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
   <div class="pin-err" id="pin-err"></div>
   <div class="pin-pad">
-    <button class="pin-key" onclick="pinKey('1')">1</button>
-    <button class="pin-key" onclick="pinKey('2')">2</button>
-    <button class="pin-key" onclick="pinKey('3')">3</button>
-    <button class="pin-key" onclick="pinKey('4')">4</button>
-    <button class="pin-key" onclick="pinKey('5')">5</button>
-    <button class="pin-key" onclick="pinKey('6')">6</button>
-    <button class="pin-key" onclick="pinKey('7')">7</button>
-    <button class="pin-key" onclick="pinKey('8')">8</button>
-    <button class="pin-key" onclick="pinKey('9')">9</button>
-    <button class="pin-key del" onclick="pinDel()">⌫</button>
-    <button class="pin-key zero" onclick="pinKey('0')">0</button>
-    <button class="pin-key del" onclick="pinClear()">✕</button>
+    <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key del" onclick="pinDel()">⌫</button><button class="pin-key zero" onclick="pinKey('0')">0</button><button class="pin-key del" onclick="pinClear()">✕</button>
   </div>
-  <button onclick="window.location.href='staff.html'"
-    style="background:transparent;border:none;color:#a5d6a7;font-size:13px;
-    font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:4px;">
-    ← กลับหน้าพนักงาน
-  </button>
+  <button onclick="window.location.href='staff.html'" style="background:transparent;border:none;color:#a5d6a7;font-size:13px;font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:4px;">← กลับหน้าพนักงาน</button>
 </div>
 
-<script>
-const ADMIN_PIN = '1234'; // ← เปลี่ยนรหัสที่นี่
-let pinVal = '';
-
-function pinKey(k) {
-  if (pinVal.length >= 4) return;
-  pinVal += k;
-  updateDots();
-  if (pinVal.length === 4) checkPin();
-}
-function pinDel() { pinVal = pinVal.slice(0,-1); updateDots(); document.getElementById('pin-err').textContent=''; }
-function pinClear() { pinVal = ''; updateDots(); document.getElementById('pin-err').textContent=''; }
-function updateDots() {
-  for(let i=0;i<4;i++) {
-    document.getElementById('d'+i).className = 'pin-dot' + (i < pinVal.length ? ' filled' : '');
-  }
-}
-function checkPin() {
-  if (pinVal === ADMIN_PIN) {
-    sessionStorage.setItem('stock_admin','1');
-    document.getElementById('pin-overlay').classList.add('hide');
-  } else {
-    document.getElementById('pin-err').textContent = 'รหัสไม่ถูกต้อง';
-    pinVal = '';
-    updateDots();
-  }
-}
-// ตรวจสอบ session
-if (sessionStorage.getItem('stock_admin') === '1') {
-  document.getElementById('pin-overlay').classList.add('hide');
-}
-</script>
-
 <div class="container">
-  <div class="header">
-    <h1>📋 ประวัติการขาย</h1>
-    <p id="sale-count"></p>
-  </div>
+  <div class="header"><h1>📋 ประวัติการขาย</h1><p id="hdr-sub">กำลังโหลด...</p></div>
 
-  <nav class="nav nav-5 no-print">
+  <nav class="nav nav-4 no-print">
     <a href="index.html"><span>📦</span>สต็อก</a>
-    <a href="sell.html"><span>🛍</span>ขายสินค้า</a>
     <a href="manage.html"><span>⚙️</span>จัดการ</a>
     <a href="history.html" class="active"><span>📋</span>ประวัติ</a>
-  <a href="staff.html" onclick="sessionStorage.removeItem('stock_admin')"><span>👤</span>พนักงาน</a>
+    <a href="staff.html" onclick="sessionStorage.removeItem('stock_admin')"><span>👤</span>พนักงาน</a>
   </nav>
+
+  <!-- ยอดวันนี้ -->
+  <div class="card" id="today-card">
+    <p class="card-title">🛍 ยอดวันนี้ (<span id="today-date-lbl"></span>)</p>
+    <div id="today-body"><div class="empty" style="padding:16px 0;">ยังไม่มียอดวันนี้</div></div>
+    <div style="margin-top:10px;display:flex;gap:8px;">
+      <button class="btn btn-green" style="flex:1;" onclick="closeDayConfirm()">📁 ปิดยอดวันนี้</button>
+    </div>
+  </div>
 
   <!-- กรองเดือน -->
   <div class="card no-print" style="padding:12px 14px;">
     <div style="display:flex;gap:8px;align-items:center;">
       <label style="font-size:13px;color:#888;white-space:nowrap;">เดือน:</label>
       <select id="month-filter" onchange="renderHistory()"
-        style="flex:1;height:36px;padding:0 10px;font-size:14px;font-family:'Sarabun',sans-serif;
-        border:1.5px solid #c8e6c9;border-radius:8px;background:#f9fef9;">
+        style="flex:1;height:36px;padding:0 10px;font-size:14px;font-family:'Sarabun',sans-serif;border:1.5px solid #c8e6c9;border-radius:8px;background:#f9fef9;">
         <option value="">ทั้งหมด</option>
       </select>
-      <button class="btn btn-red" style="height:36px;padding:0 12px;font-size:13px;white-space:nowrap;"
-        onclick="clearMonthConfirm()">ล้าง</button>
+      <button class="btn btn-red" style="height:36px;padding:0 12px;font-size:13px;white-space:nowrap;" onclick="clearMonthConfirm()">ล้าง</button>
     </div>
   </div>
 
-  <div class="export-grid no-print" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;" class="no-print">
     <button class="btn" style="height:40px;font-size:13px;" onclick="exportCSV()">📄 Export CSV</button>
     <button class="btn" style="height:40px;font-size:13px;" onclick="window.print()">🖨️ Print</button>
   </div>
@@ -110,134 +64,147 @@ if (sessionStorage.getItem('stock_admin') === '1') {
 </div>
 
 <div id="modal" class="modal-overlay" onclick="closeModalOutside(event)">
-  <div class="modal-box">
-    <div class="modal-title" id="modal-title"></div>
-    <div id="modal-body"></div>
-    <div class="modal-btns" id="modal-btns"></div>
-  </div>
+  <div class="modal-box"><div class="modal-title" id="modal-title"></div><div id="modal-body"></div><div class="modal-btns" id="modal-btns"></div></div>
 </div>
 <div id="toast" class="toast"></div>
 
 <script src="data.js"></script>
 <script>
-let sales = [];
+const ADMIN_PIN='1234';
+let pinVal='';
+function pinKey(k){if(pinVal.length>=4)return;pinVal+=k;updateDots();if(pinVal.length===4)checkPin();}
+function pinDel(){pinVal=pinVal.slice(0,-1);updateDots();document.getElementById('pin-err').textContent='';}
+function pinClear(){pinVal='';updateDots();document.getElementById('pin-err').textContent='';}
+function updateDots(){for(let i=0;i<4;i++)document.getElementById('d'+i).className='pin-dot'+(i<pinVal.length?' filled':'');}
+function checkPin(){if(pinVal===ADMIN_PIN){sessionStorage.setItem('stock_admin','1');document.getElementById('pin-overlay').classList.add('hide');}else{document.getElementById('pin-err').textContent='รหัสไม่ถูกต้อง';pinVal='';updateDots();}}
+if(sessionStorage.getItem('stock_admin')==='1')document.getElementById('pin-overlay').classList.add('hide');
 
-function init() {
-  sales = STOCK.getSales();
-  document.getElementById('sale-count').textContent = 'ทั้งหมด ' + sales.length + ' รายการ';
+let sales=[];
+
+function init(){
+  sales=STOCK.getSales();
+  document.getElementById('hdr-sub').textContent='ทั้งหมด '+sales.length+' วัน';
+  document.getElementById('today-date-lbl').textContent=todayStr();
+  renderTodayCard();
   buildMonthFilter();
   renderHistory();
 }
 
-function getMonthKey(d) {
-  const dt = new Date(d);
-  return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0');
-}
-function monthLabel(k) {
-  const [y,m] = k.split('-');
-  return new Date(+y, +m-1, 1).toLocaleDateString('th-TH',{year:'numeric',month:'long'});
-}
-
-function buildMonthFilter() {
-  const keys = [...new Set(sales.map(s => getMonthKey(s.date)))].sort().reverse();
-  const sel  = document.getElementById('month-filter');
-  keys.forEach(k => {
-    const o = document.createElement('option');
-    o.value = k; o.textContent = monthLabel(k);
-    sel.appendChild(o);
-  });
-  const thisMonth = getMonthKey(new Date().toISOString());
-  if (keys.includes(thisMonth)) sel.value = thisMonth;
+function renderTodayCard(){
+  const t=STOCK.getToday();
+  const entries=Object.values(t.items||{}).filter(x=>x.qty>0);
+  const el=document.getElementById('today-body');
+  if(!entries.length){el.innerHTML='<div class="empty" style="padding:16px 0;">ยังไม่มียอดวันนี้</div>';return;}
+  const total=entries.reduce((s,x)=>s+x.qty*(x.price||0),0);
+  el.innerHTML=entries.map(x=>`<div class="modal-row"><span>${x.name} × ${x.qty} ${x.unit}</span><span style="font-weight:600">${x.price?fmt(x.qty*x.price):'—'}</span></div>`).join('')
+    +`<div class="modal-total-row"><span style="font-size:14px;color:#666;">ยอดรวม</span><span style="font-size:18px;font-weight:700;color:#1b5e20;">${fmt(total)}</span></div>`;
 }
 
-function getFiltered() {
-  const f = document.getElementById('month-filter').value;
-  return f ? sales.filter(s => getMonthKey(s.date) === f) : sales;
+function closeDayConfirm(){
+  const t=STOCK.getToday();
+  const entries=Object.values(t.items||{}).filter(x=>x.qty>0);
+  if(!entries.length){toast('ยังไม่มียอดวันนี้','warn');return;}
+  const total=entries.reduce((s,x)=>s+x.qty*(x.price||0),0);
+  openModal('ยืนยันปิดยอดวันนี้',
+    `<p style="font-size:14px;color:#555;margin-bottom:12px;">ปิดยอด ${todayStr()} และย้ายไปประวัติ?</p>
+     <div style="background:#e8f5e9;border-radius:8px;padding:10px 12px;font-size:14px;font-weight:700;color:#1b5e20;display:flex;justify-content:space-between;">
+       <span>ยอดรวม</span><span>${fmt(total)}</span></div>`,
+    `<button class="btn btn-green" style="flex:1" onclick="doCloseDay()">✅ ปิดยอด</button>
+     <button class="btn" style="flex:1" onclick="closeModal()">ยกเลิก</button>`);
 }
 
-function renderHistory() {
-  const el  = document.getElementById('history-content');
-  const filtered = getFiltered();
-  if (!filtered.length) { el.innerHTML = '<div class="empty">ยังไม่มีประวัติในช่วงนี้</div>'; return; }
+function doCloseDay(){
+  const ok=STOCK.closeDay();
+  if(!ok){toast('ไม่มียอดให้ปิด','warn');closeModal();return;}
+  sales=STOCK.getSales();
+  closeModal();
+  renderTodayCard();
+  buildMonthFilter();
+  renderHistory();
+  toast('ปิดยอดเรียบร้อย');
+}
 
-  const byMonth = {};
-  filtered.forEach(s => {
-    const mk = getMonthKey(s.date);
-    if (!byMonth[mk]) byMonth[mk] = [];
-    byMonth[mk].push(s);
-  });
+function getMonthKey(d){const dt=new Date(d);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
+function monthLabel(k){const[y,m]=k.split('-');return new Date(+y,+m-1,1).toLocaleDateString('th-TH',{year:'numeric',month:'long'});}
 
-  let html = '';
-  Object.keys(byMonth).sort().reverse().forEach(mk => {
-    const list = byMonth[mk];
-    const monthTotal = list.reduce((a,s) => a+(s.total||0), 0);
-    html += `<div class="month-header"><span>${monthLabel(mk)}</span><span>${list.length} รายการ · ${fmt(monthTotal)}</span></div>`;
-    list.forEach((s, i) => {
-      const realIdx = sales.indexOf(s);
-      const d = new Date(s.date).toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-      html += `<div class="sale-record" onclick="showSale(${realIdx})">
+function buildMonthFilter(){
+  const keys=[...new Set(sales.map(s=>getMonthKey(s.date)))].sort().reverse();
+  const sel=document.getElementById('month-filter');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">ทั้งหมด</option>';
+  keys.forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=monthLabel(k);sel.appendChild(o);});
+  if(keys.includes(cur))sel.value=cur;
+  else{const thisMonth=getMonthKey(new Date().toISOString());if(keys.includes(thisMonth))sel.value=thisMonth;}
+}
+
+function getFiltered(){const f=document.getElementById('month-filter').value;return f?sales.filter(s=>getMonthKey(s.date)===f):sales;}
+
+function renderHistory(){
+  const el=document.getElementById('history-content');
+  const filtered=getFiltered();
+  if(!filtered.length){el.innerHTML='<div class="empty">ยังไม่มีประวัติในช่วงนี้</div>';return;}
+  const byMonth={};
+  filtered.forEach(s=>{const mk=getMonthKey(s.date);if(!byMonth[mk])byMonth[mk]=[];byMonth[mk].push(s);});
+  let html='';
+  Object.keys(byMonth).sort().reverse().forEach(mk=>{
+    const list=byMonth[mk];
+    const mTotal=list.reduce((a,s)=>a+(s.total||0),0);
+    html+=`<div class="month-header"><span>${monthLabel(mk)}</span><span>${list.length} วัน · ${fmt(mTotal)}</span></div>`;
+    list.forEach((s,i)=>{
+      const realIdx=sales.indexOf(s);
+      const d=new Date(s.date).toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'});
+      const items=s.items||[];
+      html+=`<div class="sale-record" onclick="showSale(${realIdx})">
         <div class="sale-date">${d}</div>
-        <div class="sale-desc">${s.items.length} รายการ: ${s.items.slice(0,3).map(x=>x.name).join(', ')}${s.items.length>3?'...':''}</div>
+        <div class="sale-desc">${items.length} รายการ: ${items.slice(0,3).map(x=>x.name).join(', ')}${items.length>3?'...':''}</div>
         <div class="sale-total">${fmt(s.total||0)}</div>
       </div>`;
     });
   });
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
 
-function showSale(idx) {
-  const s = sales[idx];
-  const d = new Date(s.date).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  let body = `<p style="font-size:12px;color:#999;margin-bottom:10px;">${d}</p>`;
-  s.items.forEach(x => {
-    body += `<div class="modal-row"><span>${x.name} × ${x.qty} ${x.unit}</span><span style="font-weight:600">${x.subtotal?fmt(x.subtotal):'—'}</span></div>`;
-  });
-  body += `<div class="modal-total-row">
-    <span style="font-size:14px;color:#666;">ยอดรวม</span>
-    <span style="font-size:18px;font-weight:700;color:#1b5e20;">${fmt(s.total||0)}</span>
-  </div>`;
-  openModal('รายการขาย', body,
+function showSale(idx){
+  const s=sales[idx];
+  const d=new Date(s.date).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  let body=`<p style="font-size:12px;color:#999;margin-bottom:10px;">${d}</p>`;
+  (s.items||[]).forEach(x=>{body+=`<div class="modal-row"><span>${x.name} × ${x.qty} ${x.unit}</span><span style="font-weight:600">${x.price?fmt(x.qty*x.price):'—'}</span></div>`;});
+  body+=`<div class="modal-total-row"><span style="font-size:14px;color:#666;">ยอดรวม</span><span style="font-size:18px;font-weight:700;color:#1b5e20;">${fmt(s.total||0)}</span></div>`;
+  openModal('ยอดขาย',body,
     `<button class="btn btn-red" style="flex:1" onclick="deleteSale(${idx})">🗑 ลบ</button>
      <button class="btn" style="flex:1" onclick="closeModal()">ปิด</button>`);
 }
 
-function deleteSale(idx) {
-  if (!confirm('ลบรายการนี้?')) return;
-  sales.splice(idx,1);
-  STOCK.setSales(sales);
-  closeModal();
-  document.getElementById('sale-count').textContent = 'ทั้งหมด ' + sales.length + ' รายการ';
-  renderHistory();
-  toast('ลบเรียบร้อย');
+function deleteSale(idx){
+  if(!confirm('ลบรายการนี้?'))return;
+  sales.splice(idx,1);STOCK.setSales(sales);closeModal();
+  document.getElementById('hdr-sub').textContent='ทั้งหมด '+sales.length+' วัน';
+  renderHistory();toast('ลบเรียบร้อย');
 }
 
-function clearMonthConfirm() {
-  const f = document.getElementById('month-filter').value;
-  const label = f ? monthLabel(f) : 'ทั้งหมด';
-  if (!confirm(`ลบประวัติ ${label} ทั้งหมด?`)) return;
-  sales = f ? sales.filter(s => getMonthKey(s.date) !== f) : [];
+function clearMonthConfirm(){
+  const f=document.getElementById('month-filter').value;
+  const label=f?monthLabel(f):'ทั้งหมด';
+  if(!confirm(`ลบประวัติ ${label} ทั้งหมด?`))return;
+  sales=f?sales.filter(s=>getMonthKey(s.date)!==f):[];
   STOCK.setSales(sales);
-  document.getElementById('sale-count').textContent = 'ทั้งหมด ' + sales.length + ' รายการ';
-  renderHistory();
-  toast('ลบเรียบร้อย');
+  document.getElementById('hdr-sub').textContent='ทั้งหมด '+sales.length+' วัน';
+  buildMonthFilter();renderHistory();toast('ลบเรียบร้อย');
 }
 
-function exportCSV() {
-  const filtered = getFiltered();
-  if (!filtered.length) { toast('ไม่มีข้อมูล', 'warn'); return; }
-  const rows = [['\uFEFFวันที่','สินค้า','จำนวน','หน่วย','ราคา/หน่วย','รวม']];
-  filtered.forEach(s => {
-    const d = new Date(s.date).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});
-    s.items.forEach(x => rows.push([d, x.name, x.qty, x.unit, x.price||0, x.subtotal||0]));
-    rows.push([d,'','','','ยอดรวม',s.total||0]);
-    rows.push([]);
+function exportCSV(){
+  const filtered=getFiltered();
+  if(!filtered.length){toast('ไม่มีข้อมูล','warn');return;}
+  const rows=[['\uFEFFวันที่','สินค้า','จำนวน','หน่วย','ราคา/หน่วย','รวม']];
+  filtered.forEach(s=>{
+    const d=new Date(s.date).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});
+    (s.items||[]).forEach(x=>rows.push([d,x.name,x.qty,x.unit,x.price||0,x.qty*(x.price||0)]));
+    rows.push([d,'','','','ยอดรวม',s.total||0]);rows.push([]);
   });
-  const csv = rows.map(r => r.map(c=>`"${c}"`).join(',')).join('\n');
-  const f   = document.getElementById('month-filter').value || 'all';
-  const a   = document.createElement('a');
-  a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'sales-' + f + '.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const f=document.getElementById('month-filter').value||'all';
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='sales-'+f+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
   toast('ดาวน์โหลด CSV แล้ว');
 }
 </script>

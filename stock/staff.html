@@ -3,71 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>หน้าร้าน — ตัดสต็อก</title>
+<title>หน้าร้าน — สต็อก</title>
 <link rel="stylesheet" href="style.css">
 <style>
-  body { background: #f0faf4; }
-
-  /* STAFF HEADER */
-  .staff-header { background: #1b5e20; color: #fff; padding: 14px 18px;
-    border-radius: 14px; margin-bottom: 14px;
-    display: flex; justify-content: space-between; align-items: center; }
-  .staff-header h1 { font-size: 18px; font-weight: 700; }
-  .staff-header p  { font-size: 12px; color: #a5d6a7; margin-top: 2px; }
-
-  /* STOCK CARD — ใหญ่ขึ้น กดง่าย */
-  .staff-item { background: #fff; border: 2px solid #c8e6c9; border-radius: 16px;
-    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
-    margin-bottom: 10px; transition: border-color 0.15s; }
-  .staff-item.low { border-color: #ffe082; background: #fffde7; }
-  .staff-item.out { border-color: #ef9a9a; background: #fff5f5; }
-  .staff-item-info { flex: 1; min-width: 0; }
-  .staff-item-name { font-size: 16px; font-weight: 700; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis; }
-  .staff-item-sub  { font-size: 12px; color: #888; margin-top: 3px; }
-
-  /* QTY CONTROL — ใหญ่สำหรับมือถือ */
-  .staff-ctrl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .staff-num { font-size: 24px; font-weight: 800; min-width: 48px; text-align: center;
-    color: #1b5e20; }
-  .staff-num.low { color: #f9a825; }
-  .staff-num.out { color: #e53935; }
-  .s-btn { width: 44px; height: 44px; border-radius: 12px; border: 2px solid;
-    font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    font-family: 'Sarabun', sans-serif; flex-shrink: 0;
-    -webkit-tap-highlight-color: transparent; transition: transform 0.1s; }
-  .s-btn.minus { background: #fff2f2; color: #c62828; border-color: #ffcdd2; }
-  .s-btn.minus:active { background: #ffcdd2; transform: scale(0.9); }
-  .s-btn.plus  { background: #f1f8e9; color: #2e7d32; border-color: #c5e1a5; }
-  .s-btn.plus:active  { background: #c5e1a5; transform: scale(0.9); }
-
-  /* CAT GROUP */
-  .cat-group-title { font-size: 13px; font-weight: 700; color: #2e7d32;
-    padding: 12px 0 6px; border-bottom: 1.5px solid #c8e6c9; margin-bottom: 8px;
-    display: flex; align-items: center; gap: 6px; }
-  .cat-group-title:first-child { padding-top: 4px; }
-
-  /* SEARCH */
-  .search-box { position: relative; margin-bottom: 14px; }
-  .search-box input { width: 100%; height: 44px; padding: 0 14px 0 40px;
-    font-size: 15px; font-family: 'Sarabun', sans-serif;
-    border: 2px solid #c8e6c9; border-radius: 12px; background: #fff; }
-  .search-box input:focus { outline: none; border-color: #2e7d32; }
-  .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-    font-size: 16px; color: #aaa; pointer-events: none; }
-
-  /* SUMMARY BAR */
-  .summary-bar { position: sticky; bottom: 12px; background: #1b5e20;
-    color: #fff; border-radius: 14px; padding: 12px 18px;
-    display: flex; justify-content: space-between; align-items: center;
-    margin-top: 16px; box-shadow: 0 4px 20px rgba(27,94,32,0.3); }
-  .summary-bar span { font-size: 13px; color: #a5d6a7; }
-  .summary-bar strong { font-size: 15px; color: #fff; }
-
-  /* ADMIN LINK */
-  .admin-link { text-align: center; margin-top: 10px; margin-bottom: 4px; }
-  .admin-link a { font-size: 12px; color: #aaa; text-decoration: none; }
-  .admin-link a:hover { color: #555; }
+  .staff-header { background:#1b5e20;color:#fff;padding:14px 18px;border-radius:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center; }
+  .staff-header h1 { font-size:18px;font-weight:700; }
+  .staff-header p { font-size:12px;color:#a5d6a7;margin-top:2px; }
+  .alert-bar { display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap; }
+  .alert-chip { padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700; }
+  .alert-chip.out  { background:#ffebee;color:#c62828; }
+  .alert-chip.low  { background:#fff9c4;color:#f57f17; }
+  .today-box { background:#e8f5e9;border:1.5px solid #c8e6c9;border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center; }
+  .today-box span { font-size:13px;color:#388e3c; }
+  .today-box strong { font-size:16px;font-weight:700;color:#1b5e20; }
+  .staff-item { background:#fff;border:2px solid #c8e6c9;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;transition:border-color 0.15s; }
+  .staff-item.low { border-color:#ffe082;background:#fffde7; }
+  .staff-item.out { border-color:#ef9a9a;background:#fff5f5; }
+  .staff-item-info { flex:1;min-width:0; }
+  .staff-item-name { font-size:15px;font-weight:700; }
+  .staff-item-sub  { font-size:12px;color:#888;margin-top:2px; }
+  .staff-item-sold { font-size:11px;color:#2e7d32;font-weight:600;margin-top:2px; }
+  .staff-ctrl { display:flex;align-items:center;gap:8px;flex-shrink:0; }
+  .staff-num { font-size:24px;font-weight:800;min-width:44px;text-align:center;color:#1b5e20; }
+  .staff-num.low { color:#f9a825; }
+  .staff-num.out { color:#e53935; }
+  .s-btn { width:44px;height:44px;border-radius:12px;border:2px solid;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Sarabun',sans-serif;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:transform 0.1s; }
+  .s-btn.minus { background:#fff2f2;color:#c62828;border-color:#ffcdd2; }
+  .s-btn.minus:active { background:#ffcdd2;transform:scale(0.9); }
+  .s-btn.plus  { background:#f1f8e9;color:#2e7d32;border-color:#c5e1a5; }
+  .s-btn.plus:active  { background:#c5e1a5;transform:scale(0.9); }
+  .cat-group-title { font-size:13px;font-weight:700;color:#2e7d32;padding:12px 0 6px;border-bottom:1.5px solid #c8e6c9;margin-bottom:8px; }
+  .search-box { position:relative;margin-bottom:14px; }
+  .search-box input { width:100%;height:44px;padding:0 14px 0 40px;font-size:15px;font-family:'Sarabun',sans-serif;border:2px solid #c8e6c9;border-radius:12px;background:#fff; }
+  .search-box input:focus { outline:none;border-color:#2e7d32; }
+  .search-icon { position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;color:#aaa;pointer-events:none; }
+  .summary-bar { position:sticky;bottom:12px;background:#1b5e20;color:#fff;border-radius:14px;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:16px;box-shadow:0 4px 20px rgba(27,94,32,0.3); }
+  .admin-link { text-align:center;margin-top:10px;margin-bottom:4px; }
+  .admin-link a { font-size:12px;color:#aaa;text-decoration:none; }
 </style>
 </head>
 <body>
@@ -79,10 +51,16 @@
       <h1>📦 สต็อกหน้าร้าน</h1>
       <p id="today-date"></p>
     </div>
-    <div style="text-align:right;">
-      <div id="stat-out-badge" style="font-size:13px;color:#ef9a9a;font-weight:700;"></div>
-      <div id="stat-low-badge" style="font-size:12px;color:#ffe082;"></div>
+    <div style="text-align:right;line-height:1.6;">
+      <div id="stat-out-badge"></div>
+      <div id="stat-low-badge"></div>
     </div>
+  </div>
+
+  <!-- ยอดขายวันนี้ -->
+  <div class="today-box">
+    <span>🛍 ขายวันนี้ <strong id="today-qty">0</strong> ชิ้น</span>
+    <strong id="today-total">฿0</strong>
   </div>
 
   <!-- ค้นหา -->
@@ -94,13 +72,11 @@
   <!-- รายการ -->
   <div id="staff-list"></div>
 
-  <!-- summary bar -->
   <div class="summary-bar">
-    <span>สินค้าทั้งหมด <strong id="bar-total">0</strong> รายการ</span>
+    <span>สินค้า <strong id="bar-total">0</strong> รายการ</span>
     <span>หมดแล้ว <strong id="bar-out" style="color:#ef9a9a;">0</strong></span>
   </div>
 
-  <!-- ลิงก์ไปหลังบ้าน -->
   <div class="admin-link">
     <a href="index.html">🔐 เข้าหลังบ้าน</a>
   </div>
@@ -109,58 +85,52 @@
 <div id="toast" class="toast"></div>
 <script src="data.js"></script>
 <script>
-let items = [], cats = [];
+let items = [], cats = [], todayData = {};
 
 function init() {
-  items = STOCK.getItems();
-  cats  = STOCK.getCats();
+  items     = STOCK.getItems();
+  cats      = STOCK.getCats();
+  todayData = STOCK.getToday();
   document.getElementById('today-date').textContent = todayStr();
   renderStaff();
+  renderTodaySummary();
   setupDelegation();
 }
 
-function getFiltered() {
-  const q = document.getElementById('search-inp').value.trim().toLowerCase();
-  if (!q) return null; // null = show all grouped
-  return items.filter(it => it.name.toLowerCase().includes(q));
+function renderTodaySummary() {
+  todayData = STOCK.getToday();
+  const entries = Object.values(todayData.items || {});
+  const qty   = entries.reduce((s,x) => s+x.qty, 0);
+  const total = entries.reduce((s,x) => s+x.qty*(x.price||0), 0);
+  document.getElementById('today-qty').textContent   = qty;
+  document.getElementById('today-total').textContent = fmt(total);
 }
 
 function renderStaff() {
-  items = STOCK.getItems();
+  items     = STOCK.getItems();
+  todayData = STOCK.getToday();
   const el  = document.getElementById('staff-list');
   const q   = document.getElementById('search-inp').value.trim().toLowerCase();
 
-  // stats
-  const total = items.length;
-  const out   = items.filter(i => (i.stock||0) === 0).length;
-  const low   = items.filter(i => (i.stock||0) > 0 && (i.stock||0) <= (i.minStock||5)).length;
-  document.getElementById('bar-total').textContent = total;
+  const out = items.filter(i=>(i.stock||0)===0).length;
+  const low = items.filter(i=>(i.stock||0)>0&&(i.stock||0)<=(i.minStock||5)).length;
+  document.getElementById('bar-total').textContent = items.length;
   document.getElementById('bar-out').textContent   = out;
-  document.getElementById('stat-out-badge').textContent = out > 0 ? `🔴 หมด ${out} รายการ` : '';
-  document.getElementById('stat-low-badge').textContent = low > 0 ? `🟡 ใกล้หมด ${low} รายการ` : '';
+  document.getElementById('stat-out-badge').textContent = out>0?`🔴 หมด ${out} รายการ`:'';
+  document.getElementById('stat-low-badge').textContent = low>0?`🟡 ใกล้หมด ${low} รายการ`:'';
 
-  if (!items.length) { el.innerHTML = '<div class="empty">ยังไม่มีสินค้า</div>'; return; }
+  if (!items.length) { el.innerHTML='<div class="empty">ยังไม่มีสินค้า</div>'; return; }
 
-  // filter by search
-  const filtered = q ? items.filter(it => it.name.toLowerCase().includes(q)) : null;
+  const filtered = q ? items.filter(it=>it.name.toLowerCase().includes(q)) : null;
 
   if (filtered) {
-    // แสดงแบบ flat
-    el.innerHTML = filtered.length
-      ? filtered.map(it => itemHTML(it)).join('')
-      : '<div class="empty">ไม่พบสินค้า</div>';
+    el.innerHTML = filtered.length ? filtered.map(itemHTML).join('') : '<div class="empty">ไม่พบสินค้า</div>';
     return;
   }
 
-  // แสดงแบบจัดกลุ่มตามหมวด
   let html = '';
   const grouped = {};
-  items.forEach(it => {
-    const k = it.catId || '__none';
-    if (!grouped[k]) grouped[k] = [];
-    grouped[k].push(it);
-  });
-
+  items.forEach(it => { const k=it.catId||'__none'; if(!grouped[k])grouped[k]=[]; grouped[k].push(it); });
   cats.forEach(c => {
     if (!grouped[c.id]?.length) return;
     html += `<div class="cat-group-title">🏷 ${c.name}</div>`;
@@ -174,19 +144,20 @@ function renderStaff() {
 }
 
 function itemHTML(it) {
-  const s   = it.stock || 0;
-  const min = it.minStock || 5;
-  const cls = s === 0 ? 'out' : s <= min ? 'low' : '';
-  const numCls = cls;
-  const badge = s === 0 ? ' 🔴' : s <= min ? ' 🟡' : '';
+  const s     = it.stock || 0;
+  const min   = it.minStock || 5;
+  const cls   = s===0?'out':s<=min?'low':'';
+  const badge = s===0?' 🔴':s<=min?' 🟡':'';
+  const sold  = (todayData.items||{})[it.id]?.qty || 0;
   return `<div class="staff-item ${cls}" data-id="${it.id}">
     <div class="staff-item-info">
       <div class="staff-item-name">${it.name}${badge}</div>
-      <div class="staff-item-sub">${it.unit}${it.sellPrice ? ' · ' + fmt(it.sellPrice) : ''}</div>
+      <div class="staff-item-sub">${it.unit}${it.sellPrice?' · '+fmt(it.sellPrice):''}</div>
+      ${sold>0?`<div class="staff-item-sold">ขายวันนี้ ${sold} ${it.unit}</div>`:''}
     </div>
     <div class="staff-ctrl">
       <button class="s-btn minus" data-id="${it.id}">−</button>
-      <div class="staff-num ${numCls}" id="snum-${it.id}">${s}</div>
+      <div class="staff-num ${cls}" id="snum-${it.id}">${s}</div>
       <button class="s-btn plus"  data-id="${it.id}">+</button>
     </div>
   </div>`;
@@ -196,31 +167,51 @@ function setupDelegation() {
   document.getElementById('staff-list').addEventListener('click', e => {
     const btn = e.target.closest('.s-btn');
     if (!btn) return;
-    const id = btn.dataset.id;
-    const d  = btn.classList.contains('plus') ? 1 : -1;
-    STOCK.adjustStock(id, d);
-    items = STOCK.getItems();
-    const it  = items.find(x => x.id === id);
-    if (!it) return;
-    const s   = it.stock || 0;
-    const min = it.minStock || 5;
+    const id   = btn.dataset.id;
+    const plus = btn.classList.contains('plus');
 
-    // อัปเดต DOM เฉพาะ row
+    if (plus) {
+      STOCK.returnOne(id);
+    } else {
+      const ok = STOCK.sellOne(id);
+      if (!ok) { toast('สต็อกหมดแล้ว','warn'); return; }
+    }
+
+    items     = STOCK.getItems();
+    todayData = STOCK.getToday();
+    const it  = items.find(x=>x.id===id);
+    if (!it) return;
+
+    // อัปเดต DOM
+    const s   = it.stock||0;
+    const min = it.minStock||5;
+    const cls = s===0?'out':s<=min?'low':'';
     const numEl = document.getElementById(`snum-${id}`);
     const rowEl = btn.closest('.staff-item');
-    if (numEl) { numEl.textContent = s; numEl.className = 'staff-num' + (s===0?' out':s<=min?' low':''); }
+    if (numEl) { numEl.textContent=s; numEl.className='staff-num'+(cls?' '+cls:''); }
     if (rowEl) {
-      rowEl.className = 'staff-item' + (s===0?' out':s<=min?' low':'');
-      const nameEl = rowEl.querySelector('.staff-item-name');
-      const badge  = s===0?' 🔴':s<=min?' 🟡':'';
-      nameEl.textContent = it.name + badge;
+      rowEl.className = 'staff-item'+(cls?' '+cls:'');
+      rowEl.querySelector('.staff-item-name').textContent = it.name+(s===0?' 🔴':s<=min?' 🟡':'');
+      // อัปเดต sold
+      const sold = (todayData.items||{})[id]?.qty||0;
+      let soldEl = rowEl.querySelector('.staff-item-sold');
+      if (sold>0) {
+        if (!soldEl) {
+          soldEl = document.createElement('div');
+          soldEl.className = 'staff-item-sold';
+          rowEl.querySelector('.staff-item-info').appendChild(soldEl);
+        }
+        soldEl.textContent = `ขายวันนี้ ${sold} ${it.unit}`;
+      } else if (soldEl) soldEl.remove();
     }
-    // อัปเดต stats
+
+    // stats
     const out = items.filter(i=>(i.stock||0)===0).length;
     const low = items.filter(i=>(i.stock||0)>0&&(i.stock||0)<=(i.minStock||5)).length;
-    document.getElementById('bar-out').textContent = out;
-    document.getElementById('stat-out-badge').textContent = out>0?`🔴 หมด ${out} รายการ`:'';
-    document.getElementById('stat-low-badge').textContent = low>0?`🟡 ใกล้หมด ${low} รายการ`:'';
+    document.getElementById('bar-out').textContent=out;
+    document.getElementById('stat-out-badge').textContent=out>0?`🔴 หมด ${out} รายการ`:'';
+    document.getElementById('stat-low-badge').textContent=low>0?`🟡 ใกล้หมด ${low} รายการ`:'';
+    renderTodaySummary();
   });
 }
 </script>

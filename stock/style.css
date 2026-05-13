@@ -210,3 +210,6 @@ border-radius:50%;animation:fb-spin 0.7s linear infinite;}
 /* NAV 5 cols for admin */
 .nav-5 { grid-template-columns: repeat(5,1fr) !important; }
 .nav-5 a { font-size: 10px; padding: 7px 2px; }
+
+/* NAV 4 cols */
+.nav-4 { grid-template-columns: repeat(4,1fr) !important; }

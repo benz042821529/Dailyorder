@@ -236,20 +236,41 @@ function editItemModal(id) {
   const catOpts = '<option value="">-- หมวดหมู่ --</option>' +
     cats.map(c => `<option value="${c.id}"${c.id===it.catId?' selected':''}>${c.name}</option>`).join('');
   openModal(`แก้ไข: ${it.name}`,
-    `<div class="input-group" style="flex-direction:column;gap:8px;">
-       <input class="inp" type="text" id="e-name" value="${it.name}" placeholder="ชื่อสินค้า"/>
-       <div style="display:flex;gap:8px;">
-         <input class="inp inp-half" type="text" id="e-unit" value="${it.unit}" placeholder="หน่วย"/>
-         <select class="inp" id="e-cat">${catOpts}</select>
+    `<div style="display:flex;flex-direction:column;gap:10px;">
+       <div>
+         <div style="font-size:11px;color:#888;margin-bottom:4px;">ชื่อสินค้า</div>
+         <input class="inp" type="text" id="e-name" value="${it.name}" placeholder="ชื่อสินค้า" style="width:100%;"/>
        </div>
-       <input class="inp" type="number" id="e-price" value="${it.sellPrice||''}" placeholder="ราคาขาย (บาท)" min="0"/>
        <div style="display:flex;gap:8px;">
-         <input class="inp" type="number" id="e-stock"      value="${it.stock||0}" placeholder="สต็อกปัจจุบัน" min="0"/>
-         <input class="inp" type="number" id="e-minstock"   value="${it.minStock||5}" placeholder="แจ้งเตือน ≤" min="0"/>
+         <div style="flex:1;">
+           <div style="font-size:11px;color:#888;margin-bottom:4px;">หน่วย (เช่น กล่อง, ถุง, ชิ้น)</div>
+           <input class="inp" type="text" id="e-unit" value="${it.unit}" placeholder="หน่วย" style="width:100%;"/>
+         </div>
+         <div style="flex:1;">
+           <div style="font-size:11px;color:#888;margin-bottom:4px;">หมวดหมู่</div>
+           <select class="inp" id="e-cat" style="width:100%;">${catOpts}</select>
+         </div>
        </div>
-       <input class="inp" type="number" id="e-dailystock"
-         value="${it.dailyStock!==null&&it.dailyStock!==undefined?it.dailyStock:''}"
-         placeholder="สต็อกเริ่มต้น/วัน (เว้นว่างถ้าไม่รีเซ็ต)" min="0"/>
+       <div>
+         <div style="font-size:11px;color:#888;margin-bottom:4px;">ราคาขาย (บาท/หน่วย)</div>
+         <input class="inp" type="number" id="e-price" value="${it.sellPrice||''}" placeholder="เช่น 45" min="0" style="width:100%;"/>
+       </div>
+       <div style="display:flex;gap:8px;">
+         <div style="flex:1;">
+           <div style="font-size:11px;color:#888;margin-bottom:4px;">สต็อกตอนนี้</div>
+           <input class="inp" type="number" id="e-stock" value="${it.stock||0}" min="0" style="width:100%;"/>
+         </div>
+         <div style="flex:1;">
+           <div style="font-size:11px;color:#888;margin-bottom:4px;">แจ้งเตือนเมื่อเหลือ ≤</div>
+           <input class="inp" type="number" id="e-minstock" value="${it.minStock||5}" min="0" style="width:100%;"/>
+         </div>
+       </div>
+       <div>
+         <div style="font-size:11px;color:#888;margin-bottom:4px;">สต็อกเริ่มต้น/วัน (รีเซ็ตทุกวัน — เว้นว่างถ้าไม่ต้องการ)</div>
+         <input class="inp" type="number" id="e-dailystock"
+           value="${it.dailyStock!==null&&it.dailyStock!==undefined?it.dailyStock:''}"
+           placeholder="เช่น 10" min="0" style="width:100%;"/>
+       </div>
      </div>`,
     `<button class="btn btn-green" style="flex:1" onclick="saveEdit('${id}')">บันทึก</button>
      <button class="btn" style="flex:1" onclick="closeModal()">ยกเลิก</button>`

@@ -8,17 +8,83 @@
 </head>
 <body>
 <div id="fb-loader"><div class="fb-spinner"></div><p>กำลังโหลดข้อมูล...</p></div>
+<!-- PIN LOCK OVERLAY -->
+<div id="pin-overlay" class="pin-overlay">
+  <div class="pin-title">🔐 หลังบ้าน</div>
+  <div class="pin-sub">ใส่รหัส 4 หลัก</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-err" id="pin-err"></div>
+  <div class="pin-pad">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key del" onclick="pinDel()">⌫</button>
+    <button class="pin-key zero" onclick="pinKey('0')">0</button>
+    <button class="pin-key del" onclick="pinClear()">✕</button>
+  </div>
+  <button onclick="window.location.href='staff.html'"
+    style="background:transparent;border:none;color:#a5d6a7;font-size:13px;
+    font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:4px;">
+    ← กลับหน้าพนักงาน
+  </button>
+</div>
+
+<script>
+const ADMIN_PIN = '1234'; // ← เปลี่ยนรหัสที่นี่
+let pinVal = '';
+
+function pinKey(k) {
+  if (pinVal.length >= 4) return;
+  pinVal += k;
+  updateDots();
+  if (pinVal.length === 4) checkPin();
+}
+function pinDel() { pinVal = pinVal.slice(0,-1); updateDots(); document.getElementById('pin-err').textContent=''; }
+function pinClear() { pinVal = ''; updateDots(); document.getElementById('pin-err').textContent=''; }
+function updateDots() {
+  for(let i=0;i<4;i++) {
+    document.getElementById('d'+i).className = 'pin-dot' + (i < pinVal.length ? ' filled' : '');
+  }
+}
+function checkPin() {
+  if (pinVal === ADMIN_PIN) {
+    sessionStorage.setItem('stock_admin','1');
+    document.getElementById('pin-overlay').classList.add('hide');
+  } else {
+    document.getElementById('pin-err').textContent = 'รหัสไม่ถูกต้อง';
+    pinVal = '';
+    updateDots();
+  }
+}
+// ตรวจสอบ session
+if (sessionStorage.getItem('stock_admin') === '1') {
+  document.getElementById('pin-overlay').classList.add('hide');
+}
+</script>
+
 <div class="container">
   <div class="header">
     <h1>⚙️ จัดการ</h1>
     <p>สินค้าและหมวดหมู่</p>
   </div>
 
-  <nav class="nav">
+  <nav class="nav nav-5">
     <a href="index.html"><span>📦</span>สต็อก</a>
     <a href="sell.html"><span>🛍</span>ขายสินค้า</a>
     <a href="manage.html" class="active"><span>⚙️</span>จัดการ</a>
     <a href="history.html"><span>📋</span>ประวัติ</a>
+  <a href="staff.html" onclick="sessionStorage.removeItem('stock_admin')"><span>👤</span>พนักงาน</a>
   </nav>
 
   <!-- tabs -->

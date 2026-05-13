@@ -94,8 +94,26 @@ const STOCK = (() => {
     _checkDayRollover();
   }
 
+  // callback สำหรับ real-time today update
+  let _onTodayChange = null;
+
+  function _listenToday() {
+    if (!_db) return;
+    _db.collection('stock').doc('today').onSnapshot(snap => {
+      if (!snap.exists) return;
+      const newToday = snap.data().value;
+      if (!newToday) return;
+      const todayKey = new Date().toISOString().slice(0,10);
+      if (newToday.date === todayKey) {
+        _today = newToday;
+        if (typeof _onTodayChange === 'function') _onTodayChange(_today);
+      }
+    });
+  }
+
   return {
-    ready:      () => prefetch(),
+    ready:      () => prefetch().then(() => _listenToday()),
+    onTodayChange: (fn) => { _onTodayChange = fn; },
     getCats:    () => _cats  || [],
     getItems:   () => _items || [],
     getSales:   () => _sales || [],

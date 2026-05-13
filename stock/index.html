@@ -139,6 +139,11 @@ function init() {
   renderStock();
   renderTodayBox();
   setupDelegation();
+  // ฟัง real-time เมื่อพนักงานตัดสต็อก
+  STOCK.onTodayChange(() => {
+    renderTodayBox();
+    renderStock(); // อัปเดตตัวเลขสต็อกด้วย
+  });
 }
 
 function renderCatFilter() {

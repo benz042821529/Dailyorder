@@ -83,9 +83,14 @@ let items = [], cats = [], todayData = {};
 function init() {
   items     = STOCK.getItems();
   cats      = STOCK.getCats();
+  todayData = STOCK.getToday();
   document.getElementById('today-date').textContent = todayStr();
   renderStaff();
   setupDelegation();
+
+  // real-time: sync ข้ามเครื่อง (คนอื่นขาย/แก้สต็อก → อัปเดตทันที)
+  STOCK.onItemsChange(newItems => { items = newItems; renderStaff(); });
+  STOCK.onTodayChange(t => { todayData = t; renderStaff(); });
 }
 
 function renderTodaySummary() {
@@ -160,7 +165,8 @@ function setupDelegation() {
     const plus = btn.classList.contains('plus');
 
     if (plus) {
-      STOCK.returnOne(id);
+      const ok = STOCK.returnOne(id);
+      if (!ok) { toast('ไม่มียอดขายวันนี้ให้คืน','warn'); return; }
     } else {
       const ok = STOCK.sellOne(id);
       if (!ok) { toast('สต็อกหมดแล้ว','warn'); return; }

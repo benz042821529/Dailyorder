@@ -66,8 +66,9 @@ const STOCK = (() => {
       const entries = Object.values(_today.items).filter(x => x.qty > 0);
       if (entries.length > 0) {
         if (!_sales) _sales = [];
-        const total = entries.reduce((s,x) => s + x.qty*(x.price||0), 0);
-        _sales.unshift({ date: _today.date, items: entries, total });
+        const total  = entries.reduce((s,x) => s + x.qty*(x.price||0), 0);
+        const profit = entries.reduce((s,x) => s + x.qty*((x.price||0)-(x.cost||0)), 0);
+        _sales.unshift({ date: _today.date, items: entries, total, profit });
         if (_sales.length > 365) _sales.splice(365);
         _set('sales', _sales);
       }
@@ -88,7 +89,7 @@ const STOCK = (() => {
       _get('categories'), _get('items'), _get('sales'), _get('today')
     ]);
     _cats  = c || [];
-    _items = i || [];
+    _items = (i || []).map(it => ({ ...it, id: String(it.id) }));  // id เป็น string เสมอ กันปัญหาเทียบชนิดไม่ตรง
     _sales = s || [];
     _today = t || { date: new Date().toISOString().slice(0,10), items: {} };
     _checkDayRollover();
@@ -116,7 +117,7 @@ const STOCK = (() => {
       if (!snap.exists) return;
       const val = snap.data().value;
       if (!val) return;
-      _items = val;
+      _items = (val || []).map(it => ({ ...it, id: String(it.id) }));
       if (typeof _onItemsChange === 'function') _onItemsChange(_items);
     });
   }
@@ -134,62 +135,54 @@ const STOCK = (() => {
     setItems: v => { _items = v; _set('items', v); },
     setSales: v => { _sales = v; _set('sales', v); },
 
-    // กด − หน้าร้าน: ลดสต็อก + บันทึกยอดวันนี้
+    // กด − หน้าร้าน: ขาย 1 ชิ้น → ลดสต็อก + บันทึกยอดวันนี้
     sellOne: (id) => {
+      id = String(id);
       _checkDayRollover();
-      // ลดสต็อก
-      const it = (_items||[]).find(x => x.id === id);
+      const it = (_items||[]).find(x => String(x.id) === id);
       if (!it || (it.stock||0) <= 0) return false;
-      _items = _items.map(x => x.id===id ? {...x, stock: Math.max(0,(x.stock||0)-1)} : x);
+      _items = _items.map(x => String(x.id)===id ? {...x, stock: Math.max(0,(x.stock||0)-1)} : x);
       _set('items', _items);
-      // บวกยอดวันนี้
-      if (!_today.items[id]) _today.items[id] = { id, name: it.name, unit: it.unit, price: it.sellPrice||0, qty: 0 };
+      if (!_today.items[id]) _today.items[id] = { id, name: it.name, unit: it.unit, price: it.sellPrice||0, cost: it.costPrice||0, qty: 0 };
       _today.items[id].qty += 1;
+      _today.items[id].price = it.sellPrice||0;   // sync ราคาปัจจุบัน
+      _today.items[id].cost  = it.costPrice||0;
       _set('today', _today);
       return true;
     },
 
-    // กด + หน้าร้าน: เพิ่มสต็อกคืน + ลดยอดวันนี้
+    // กด + หน้าร้าน: คืนยอดขาย 1 ชิ้น (สต็อก +1, ยอดวันนี้ −1)
+    // ทำได้เฉพาะเมื่อมียอดขายวันนี้ให้คืน — สต็อกจึงไม่มีทางเกินจำนวนตั้งต้น
     returnOne: (id) => {
+      id = String(id);
       _checkDayRollover();
-      const it = (_items||[]).find(x => x.id === id);
-      if (!it) return;
-      _items = _items.map(x => x.id===id ? {...x, stock: (x.stock||0)+1} : x);
+      const it = (_items||[]).find(x => String(x.id) === id);
+      if (!it) return false;
+      const t = _today.items[id];
+      if (!t || t.qty <= 0) return false;          // ไม่มียอดขายให้คืน → ไม่ทำอะไร
+      _items = _items.map(x => String(x.id)===id ? {...x, stock: (x.stock||0)+1} : x);
       _set('items', _items);
-      if (_today.items[id] && _today.items[id].qty > 0) {
-        _today.items[id].qty -= 1;
-        _set('today', _today);
-      }
+      t.qty -= 1;
+      _set('today', _today);
+      return true;
     },
 
-    // adjustStock: กด − นับยอดขาย, กด + คืนยอด (ใช้ทั้งหน้าพนักงานและหลังบ้าน)
+    // adjustStock: กด − ขาย 1 ชิ้น, กด + คืนยอดขาย 1 ชิ้น (ใช้ทั้งหน้าพนักงานและหลังบ้าน)
     adjustStock: (id, delta) => {
-      _checkDayRollover();
-      const it = (_items||[]).find(x => x.id === id);
-      if (!it) return false;
-      if (delta < 0 && (it.stock||0) <= 0) return false;
-      _items = _items.map(x => x.id===id ? {...x, stock: Math.max(0,(x.stock||0)+delta)} : x);
-      _set('items', _items);
-      if (delta < 0) {
-        if (!_today.items[id]) _today.items[id] = { id, name: it.name, unit: it.unit, price: it.sellPrice||0, qty: 0 };
-        _today.items[id].qty += 1;
-        _set('today', _today);
-      } else if (delta > 0 && _today.items[id] && _today.items[id].qty > 0) {
-        _today.items[id].qty -= 1;
-        _set('today', _today);
-      }
-      return true;
+      return delta < 0 ? STOCK.sellOne(id) : STOCK.returnOne(id);
     },
 
     // เซ็ตสต็อกโดยตรง (ไม่นับยอดขาย — ใช้สำหรับเติมของ/แก้ตัวเลข)
     setStock: (id, val) => {
-      _items = (_items||[]).map(it => it.id===id ? {...it, stock: Math.max(0,val)} : it);
+      id = String(id);
+      _items = (_items||[]).map(it => String(it.id)===id ? {...it, stock: Math.max(0,val)} : it);
       _set('items', _items);
     },
 
     // ตั้งค่าสต็อกเริ่มต้นต่อวัน
     setDailyStock: (id, val) => {
-      _items = (_items||[]).map(it => it.id===id ? {...it, dailyStock: Math.max(0,val)} : it);
+      id = String(id);
+      _items = (_items||[]).map(it => String(it.id)===id ? {...it, dailyStock: Math.max(0,val)} : it);
       _set('items', _items);
     },
 
@@ -208,8 +201,9 @@ const STOCK = (() => {
       const entries = Object.values(_today.items).filter(x => x.qty > 0);
       if (!entries.length) return false;
       if (!_sales) _sales = [];
-      const total = entries.reduce((s,x) => s + x.qty*(x.price||0), 0);
-      _sales.unshift({ date: _today.date + 'T' + new Date().toTimeString().slice(0,5), items: entries, total });
+      const total  = entries.reduce((s,x) => s + x.qty*(x.price||0), 0);
+      const profit = entries.reduce((s,x) => s + x.qty*((x.price||0)-(x.cost||0)), 0);
+      _sales.unshift({ date: _today.date + 'T' + new Date().toTimeString().slice(0,5), items: entries, total, profit });
       if (_sales.length > 365) _sales.splice(365);
       _set('sales', _sales);
       _today = { date: new Date().toISOString().slice(0,10), items: {} };
@@ -221,6 +215,16 @@ const STOCK = (() => {
       }));
       _set('items', _items);
       return true;
+    },
+
+    // สรุปยอดวันนี้: จำนวนชิ้น / ยอดขาย / กำไร
+    getTodaySummary: () => {
+      const entries = Object.values((_today && _today.items) || {}).filter(x => x.qty > 0);
+      return {
+        qty:    entries.reduce((s,x) => s + x.qty, 0),
+        total:  entries.reduce((s,x) => s + x.qty*(x.price||0), 0),
+        profit: entries.reduce((s,x) => s + x.qty*((x.price||0)-(x.cost||0)), 0),
+      };
     },
   };
 })();
